@@ -12,3 +12,6 @@ pub mod ej11;
 pub mod ej12;
 pub mod ej13;
 pub mod ej14;
+
+#[cfg(test)]
+mod tests;
