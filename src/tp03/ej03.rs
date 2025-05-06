@@ -4,6 +4,7 @@ pub struct Fecha {
     pub mes:u8,
 }
 
+// TODO: hacer un wrapper con alguna dependencia de fechas
 impl Fecha {
     pub fn new(dia:u8, mes:u8, año:u16) -> Self {
         Fecha {

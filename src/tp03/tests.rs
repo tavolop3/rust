@@ -70,6 +70,35 @@ mod tests {
         let tot = tot_desc + tot_imp;
         assert_eq!(p.calcular_impuestos(21.0), tot_imp);
         assert_eq!(p.aplicar_descuento(10.0), tot_desc);
-        assert_eq!(p.calcular_precio_total(21.0,10.0), tot);
+        assert_eq!(p.calcular_precio_total(Some(21.0),Some(10.0)), tot);
+        assert_eq!(p.calcular_precio_total(Some(21.0),None), (tot+7000.0*0.10));
+        assert_eq!(p.calcular_precio_total(None,None), 7000.0);
+    }
+
+    #[test]
+    fn test_ej06_examenes() {
+        use crate::tp03::ej06::Estudiante;
+        use crate::tp03::ej06::Examen;
+
+        let ex1 = Examen::new("Rust", 8.5);
+        let ex2 = Examen::new("OO2", 7.0);
+        let ex3 = Examen::new("SO", 9.0);
+        let est = Estudiante::new(
+            "Alan Turing",
+            1,
+            vec![ex1, ex2, ex3],
+        );
+        assert_eq!(est.obtener_promedio(), (8.5 + 7.0 + 9.0) / 3.0);
+        assert_eq!(est.obtener_calificacion_mas_alta(), 9.0);
+        assert_eq!(est.obtener_calificacion_mas_baja(), 7.0);
+        let est_vacio = Estudiante::new(
+            "Ana Gómez",
+            67890,
+            vec![],
+        );
+
+        assert_eq!(est_vacio.obtener_promedio(), 0.0);
+        assert_eq!(est_vacio.obtener_calificacion_mas_alta(), 0.0);
+        assert_eq!(est_vacio.obtener_calificacion_mas_baja(), 0.0);
     }
 }

@@ -22,8 +22,19 @@ impl Producto {
         self.precio - (self.precio * descuento/100.0)
     }
 
-    // TODO: los parametros de esto tienen que ser opcionales
-    pub fn calcular_precio_total(&self, impuestos:f64, descuento:f64) -> f64 {
-        self.aplicar_descuento(descuento) + self.calcular_impuestos(impuestos)
+    pub fn calcular_precio_total(&self, impuestos:Option<f64>, descuento:Option<f64>) -> f64 {
+        let mut tot = self.precio;
+
+        if let Some(d) = descuento {
+            tot = self.aplicar_descuento(d);
+        } else {
+            tot = self.precio;
+        }
+
+        if let Some(i) = impuestos {
+            tot += self.calcular_impuestos(i);
+        }
+
+        tot
     }
 }
