@@ -59,4 +59,17 @@ mod tests {
         assert_eq!(t_is.calcular_perimetro(), 16.0);
         assert_eq!(t_es.calcular_perimetro(), 12.0);
     }
+
+    #[test]
+    fn test_ej05_producto() {
+        use crate::tp03::ej05::Producto;
+
+        let p = Producto::new("Mate", 7000.0, 0);
+        let tot_imp = 7000.0 * 0.21;
+        let tot_desc = 7000.0 - 7000.0 * 0.10;
+        let tot = tot_desc + tot_imp;
+        assert_eq!(p.calcular_impuestos(21.0), tot_imp);
+        assert_eq!(p.aplicar_descuento(10.0), tot_desc);
+        assert_eq!(p.calcular_precio_total(21.0,10.0), tot);
+    }
 }
