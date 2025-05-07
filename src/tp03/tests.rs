@@ -101,4 +101,23 @@ mod tests {
         assert_eq!(est_vacio.obtener_calificacion_mas_alta(), 0.0);
         assert_eq!(est_vacio.obtener_calificacion_mas_baja(), 0.0);
     }
+
+    #[test]
+    fn test_ej07_concesionario() {
+        use crate::tp03::ej07::ConcesionarioAuto;
+        use crate::tp03::ej07::Auto;
+        use crate::tp03::ej07::Color;
+ 
+        let a1 = Auto::new("Audi".to_string(), "A3".to_string(), 1999, 100.0, Color::NEGRO); 
+        let mut c = ConcesionarioAuto::new("Concesionario".to_string(), "Calle 1".to_string(), 1);
+        let a2 = Auto::new("BMW".to_string(), "A4".to_string(), 2015, 100.0, Color::ROJO); 
+        assert_eq!(c.agregar_auto(&a1), true);
+        assert_eq!(c.agregar_auto(&a2), false);
+        assert_eq!(c.buscar_auto(&a1).unwrap().get_info(), a1.get_info());
+        assert!(c.buscar_auto(&a2).is_none());
+        c.eliminar_auto(&a1);
+        assert!(c.buscar_auto(&a1).is_none());
+        assert_eq!(a1.calcular_precio(), 85.0);
+        assert_eq!(a2.calcular_precio(), 140.0);
+    }
 }

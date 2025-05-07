@@ -1,5 +1,6 @@
 pub struct Triangulo(f32, f32, f32);
 
+// TODO: no se pueden usar traits otros que Debug y Clone para este tp
 #[derive(Debug, PartialEq, Eq)]
 pub enum TipoTriangulo {
     EQUILATERO,
