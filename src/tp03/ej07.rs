@@ -42,12 +42,10 @@ impl ConcesionarioAuto {
     }
 
     pub fn eliminar_auto(&mut self, auto:&Auto) {
-        let mut i = 0;
-        while self.autos.len() > i {
+        for i in 0..self.autos.len() {
             if self.autos[i].comparar(auto) {
                 self.autos.swap_remove(i);
-            } else {
-                i += 1;
+                return
             }
         }
     }
@@ -99,6 +97,6 @@ impl Auto {
             tasa -= 0.05;
         }
         
-        (self.precio_bruto * (1.0 + tasa))
+        self.precio_bruto * (1.0 + tasa)
     }
 }

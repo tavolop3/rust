@@ -120,4 +120,39 @@ mod tests {
         assert_eq!(a1.calcular_precio(), 85.0);
         assert_eq!(a2.calcular_precio(), 140.0);
     }
+
+    #[test]
+    fn test_ej08_playlist() {
+        use crate::tp03::ej08::Playlist;
+        use crate::tp03::ej08::Cancion;
+        use crate::tp03::ej08::Genero;
+
+        let c1 = Cancion::new(String::from("My Propeller"), String::from("Arctic Monkeys"), Genero::ROCK);
+        let mut p = Playlist::new(String::from("Monos"));
+        p.agregar_cancion(&c1);
+        let c = p.buscar_cancion_por_nombre(String::from("My Propeller"));
+        assert_eq!(c.unwrap().info(), c1.info());
+        p.eliminar_cancion(&c1);
+        let c = p.buscar_cancion_por_nombre(String::from("My Propeller"));
+        assert_eq!(c.is_none(), true);
+
+        let c0 = Cancion::new(String::from("Dance little liar"), String::from("Arctic Monkeys"), Genero::ROCK);
+        p.agregar_cancion(&c0);
+        let c1 = Cancion::new(String::from("Cornerstone"), String::from("Arctic Monkeys"), Genero::ROCK);
+        p.agregar_cancion(&c1);
+        
+        assert_eq!(p.get_posicion_cancion(&c1).unwrap(), 1);
+        p.mover_cancion(&c1, 0);
+        assert_eq!(p.get_posicion_cancion(&c1).unwrap(), 0);
+
+        assert_eq!(p.get_canciones_genero(Genero::ROCK)[0].comparar(&c1), true);
+        assert_eq!(p.get_canciones_artista(String::from("Arctic Monkeys")).len(), 2);
+        assert_eq!(*p.get_nombre(), String::from("Monos"));
+        p.cambiar_titulo(String::from("Articos"));
+        assert_eq!(*p.get_nombre(), String::from("Articos"));
+
+        assert_eq!(p.get_len_canciones(), 2);
+        p.del_all_canciones();
+        assert_eq!(p.get_len_canciones(), 0);
+    }
 }
