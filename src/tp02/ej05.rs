@@ -15,8 +15,8 @@ use std::collections::HashMap;
 //     return dups;
 // }
 
-pub fn dup_vals_hashmap(arr: [f64;5]) -> [f64;5] {
-    let mut dups = [0.0;5];
+pub fn dup_vals_hashmap(arr: [f64; 5]) -> [f64; 5] {
+    let mut dups = [0.0; 5];
     let mut nums = HashMap::new();
     let mut dup_i = 0;
 

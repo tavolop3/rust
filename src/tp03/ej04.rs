@@ -4,11 +4,11 @@ pub struct Triangulo(f32, f32, f32);
 pub enum TipoTriangulo {
     EQUILATERO,
     ISOCELES,
-    ESCALENO
+    ESCALENO,
 }
 
 impl Triangulo {
-    pub fn new(l1:f32, l2:f32, l3:f32) -> Self {
+    pub fn new(l1: f32, l2: f32, l3: f32) -> Self {
         Triangulo(l1, l2, l3)
     }
 
@@ -22,13 +22,12 @@ impl Triangulo {
         } else {
             TipoTriangulo::ESCALENO
         }
-        
     }
 
     //formula de Herón
     pub fn calcular_area(&self) -> f32 {
         let s = (self.0 + self.1 + self.2) / 2.0;
-        (s*(s-self.0)*(s-self.1)*(s-self.2)).sqrt()
+        (s * (s - self.0) * (s - self.1) * (s - self.2)).sqrt()
     }
 
     pub fn calcular_perimetro(&self) -> f32 {

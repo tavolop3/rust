@@ -1,29 +1,29 @@
 pub struct Estudiante {
-    nombre:String,
-    id:u64,
-    examenes:Vec<Examen>,
+    nombre: String,
+    id: u64,
+    examenes: Vec<Examen>,
 }
 
 pub struct Examen {
-    nombre:String,
-    nota:f32,
+    nombre: String,
+    nota: f32,
 }
 
 impl Examen {
-    pub fn new(nombre:&str, nota:f32) -> Self {
+    pub fn new(nombre: &str, nota: f32) -> Self {
         Examen {
-            nombre:nombre.to_string(),
-            nota
+            nombre: nombre.to_string(),
+            nota,
         }
     }
 }
 
 impl Estudiante {
-    pub fn new(nombre:&str, id:u64, examenes:Vec<Examen>) -> Self {
+    pub fn new(nombre: &str, id: u64, examenes: Vec<Examen>) -> Self {
         Estudiante {
-            nombre:nombre.to_string(),
+            nombre: nombre.to_string(),
             id,
-            examenes
+            examenes,
         }
     }
 
@@ -34,9 +34,9 @@ impl Estudiante {
 
         let mut tot = 0.0;
         for e in &self.examenes {
-            tot += e.nota          
+            tot += e.nota
         }
-        
+
         tot / self.examenes.len() as f32
     }
 
@@ -49,7 +49,7 @@ impl Estudiante {
         for e in &self.examenes {
             if e.nota > max {
                 max = e.nota;
-            } 
+            }
         }
 
         max
@@ -64,7 +64,7 @@ impl Estudiante {
         for e in &self.examenes {
             if e.nota < min {
                 min = e.nota;
-            } 
+            }
         }
 
         min

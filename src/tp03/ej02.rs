@@ -1,10 +1,10 @@
 pub struct Rectangulo {
-    longitud:f64,
-    ancho:f64,
+    longitud: f64,
+    ancho: f64,
 }
 
 impl Rectangulo {
-    pub fn new(longitud:f64, ancho:f64) -> Self {
+    pub fn new(longitud: f64, ancho: f64) -> Self {
         Rectangulo { longitud, ancho }
     }
 
@@ -17,6 +17,6 @@ impl Rectangulo {
     }
 
     pub fn es_cuadrado(&self) -> bool {
-        self.longitud == self.ancho 
+        self.longitud == self.ancho
     }
 }

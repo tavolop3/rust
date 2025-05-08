@@ -1,16 +1,16 @@
 #[derive(Debug)]
 pub struct Persona {
-    nombre:String,
-    direccion:Option<String>,
-    edad:u8,
+    nombre: String,
+    direccion: Option<String>,
+    edad: u8,
 }
 
 impl Persona {
-    pub fn new(nombre: String, direccion: Option<String>, edad:u8) -> Self {
-        Persona { 
-            nombre, 
-            direccion, 
-            edad 
+    pub fn new(nombre: String, direccion: Option<String>, edad: u8) -> Self {
+        Persona {
+            nombre,
+            direccion,
+            edad,
         }
     }
 
@@ -19,7 +19,10 @@ impl Persona {
             Some(dir) => dir.clone(),
             None => String::from("Sin dirección"),
         };
-        format!("Nombre:{0}, Direccion: {dir_str}, Edad:{1}", self.nombre, self.edad)
+        format!(
+            "Nombre:{0}, Direccion: {dir_str}, Edad:{1}",
+            self.nombre, self.edad
+        )
     }
 
     pub fn obtener_edad(&self) -> u8 {
