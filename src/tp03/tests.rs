@@ -181,4 +181,11 @@ mod tests_tp03 {
         p.del_all_canciones();
         assert_eq!(p.get_len_canciones(), 0);
     }
+
+    #[test]
+    fn test_ej09_veterinaria() {
+        use crate::tp03::ej09::Veterinaria;
+
+        let mut v = Veterinaria::new(String::from("WideArrow"), String::from("Calle 1"), 1);
+    }
 }
