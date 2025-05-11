@@ -184,8 +184,84 @@ mod tests_tp03 {
 
     #[test]
     fn test_ej09_veterinaria() {
+        use crate::tp03::ej09::Cliente;
+        use crate::tp03::ej09::Mascota;
+        use crate::tp03::ej09::RegistroAtencion;
+        use crate::tp03::ej09::TipoAnimal;
         use crate::tp03::ej09::Veterinaria;
 
         let mut v = Veterinaria::new(String::from("WideArrow"), String::from("Calle 1"), 1);
+        let mut c1 = Cliente::new("calle 1".to_string(), "tao".to_string(), "123".to_string());
+        let mut m1 = Mascota::new("bobi".to_string(), 1, TipoAnimal::Perro, c1);
+        let mut ra1 = RegistroAtencion::new(
+            &m1,
+            "ta joya".to_string(),
+            "nada".to_string(),
+            Fecha::new(8, 5, 2024),
+        );
+        let mut c2 = Cliente::new("calle 2".to_string(), "topa".to_string(), "234".to_string());
+        let mut m2 = Mascota::new("toby".to_string(), 2, TipoAnimal::Perro, c2);
+        let mut ra2 = RegistroAtencion::new(
+            &m2,
+            "ta joya".to_string(),
+            "nada".to_string(),
+            Fecha::new(9, 6, 2023),
+        );
+        let mut ra2_mod = RegistroAtencion::new(
+            &m2,
+            "no está joya".to_string(),
+            "si tiene algo che".to_string(),
+            Fecha::new(9, 6, 2023),
+        );
+
+        v.agregar_mascota(&m1);
+        assert!(v.atender().is_some());
+        v.eliminar_mascota(&m1);
+        assert!(v.atender().is_none());
+        v.agregar_mascota(&m1);
+        v.agregar_mascota_urgente(&m2);
+        assert!(v.atender().unwrap().comparar(&m2));
+
+        v.agregar_mascota(&m2);
+        v.registrar_atencion(&ra1);
+        v.registrar_atencion(&ra2);
+        assert!(
+            v.buscar_registro_atencion("bobi".to_string(), "tao".to_string(), "123".to_string())
+                .is_some()
+        );
+        assert!(
+            v.buscar_registro_atencion(
+                "truki".to_string(),
+                "nao existe".to_string(),
+                "123".to_string()
+            )
+            .is_none()
+        );
+        assert!(
+            v.buscar_registro_atencion("toby".to_string(), "topa".to_string(), "234".to_string())
+                .is_some()
+        );
+
+        assert_eq!(
+            v.modificar_diagnostico(&ra2, &ra2_mod).unwrap().get_info(),
+            "diagnostico:no está joya tratamiento:si tiene algo che prox_dia:0"
+        );
+        assert_eq!(
+            v.modificar_fecha_atencion(&ra2, Fecha::new(15, 10, 2023))
+                .unwrap()
+                .get_info(),
+            "diagnostico:no está joya tratamiento:si tiene algo che prox_dia:15"
+        );
+        assert_eq!(
+            v.modificar_fecha_atencion(&ra2, Fecha::new(15, 10, 2023))
+                .unwrap()
+                .proxima_fecha
+                .unwrap()
+                .dia,
+            15
+        );
+
+        assert!(v.eliminar_atencion(&ra2));
+        assert!(!v.eliminar_atencion(&ra2));
     }
 }

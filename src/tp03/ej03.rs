@@ -1,3 +1,4 @@
+#[derive(Debug, Clone)]
 pub struct Fecha {
     pub año: u16,
     pub dia: u8,
@@ -27,7 +28,7 @@ impl Fecha {
             _ => 31,
         };
 
-        return self.dia <= dias_x_mes;
+        self.dia <= dias_x_mes
     }
 
     pub fn es_bisiesto(&self) -> bool {
@@ -98,5 +99,9 @@ impl Fecha {
         let t2 = fecha.dia as u16 + fecha.mes as u16 + fecha.año;
 
         t1 > t2
+    }
+
+    pub fn comparar(&self, f: &Fecha) -> bool {
+        self.dia == f.dia && self.mes == f.mes && self.año == f.año
     }
 }
