@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 pub struct Estudiante {
     nombre: String,
     id: u64,

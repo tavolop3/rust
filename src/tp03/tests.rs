@@ -39,7 +39,7 @@ mod tests_tp03 {
         let f_inv = Fecha::new(32, 7, 2023);
         assert!(!f_inv.es_fecha_valida());
         let f_may = Fecha::new(1, 5, 2025);
-        assert!(f_may.es_mayor(f));
+        assert!(f_may.es_mayor(&f));
         let f_bisiesto = Fecha::new(1, 1, 2020);
         assert!(f_bisiesto.es_bisiesto());
     }
@@ -191,23 +191,23 @@ mod tests_tp03 {
         use crate::tp03::ej09::Veterinaria;
 
         let mut v = Veterinaria::new(String::from("WideArrow"), String::from("Calle 1"), 1);
-        let mut c1 = Cliente::new("calle 1".to_string(), "tao".to_string(), "123".to_string());
-        let mut m1 = Mascota::new("bobi".to_string(), 1, TipoAnimal::Perro, c1);
-        let mut ra1 = RegistroAtencion::new(
+        let c1 = Cliente::new("calle 1".to_string(), "tao".to_string(), "123".to_string());
+        let m1 = Mascota::new("bobi".to_string(), 1, TipoAnimal::Perro, c1);
+        let ra1 = RegistroAtencion::new(
             &m1,
             "ta joya".to_string(),
             "nada".to_string(),
             Fecha::new(8, 5, 2024),
         );
-        let mut c2 = Cliente::new("calle 2".to_string(), "topa".to_string(), "234".to_string());
-        let mut m2 = Mascota::new("toby".to_string(), 2, TipoAnimal::Perro, c2);
-        let mut ra2 = RegistroAtencion::new(
+        let c2 = Cliente::new("calle 2".to_string(), "topa".to_string(), "234".to_string());
+        let m2 = Mascota::new("toby".to_string(), 2, TipoAnimal::Perro, c2);
+        let ra2 = RegistroAtencion::new(
             &m2,
             "ta joya".to_string(),
             "nada".to_string(),
             Fecha::new(9, 6, 2023),
         );
-        let mut ra2_mod = RegistroAtencion::new(
+        let ra2_mod = RegistroAtencion::new(
             &m2,
             "no está joya".to_string(),
             "si tiene algo che".to_string(),
@@ -263,5 +263,95 @@ mod tests_tp03 {
 
         assert!(v.eliminar_atencion(&ra2));
         assert!(!v.eliminar_atencion(&ra2));
+    }
+
+    #[test]
+    fn test_ej10_biblioteca() {
+        use crate::tp03::ej10::*;
+
+        let mut biblioteca = Biblioteca::new(
+            "Biblioteca informatica".to_string(),
+            "Calle 123".to_string(),
+        );
+        let libro1 = Libro::new(
+            "12345".to_string(),
+            "Un libro".to_string(),
+            "Un autor1".to_string(),
+            400,
+            Genero::Novela,
+        );
+        let libro2 = Libro::new(
+            "67890".to_string(),
+            "La biblia de C".to_string(),
+            "Brian Cranston".to_string(),
+            120,
+            Genero::Tecnico,
+        );
+
+        let cliente1 = Cliente::new(
+            "Juan Perez".to_string(),
+            "123456789".to_string(),
+            "juan@email.com".to_string(),
+        );
+        let cliente2 = Cliente::new(
+            "Pepito Lopez".to_string(),
+            "987654321".to_string(),
+            "pepito@email.com".to_string(),
+        );
+
+        biblioteca.agregar_libro(&libro1, 5);
+        biblioteca.agregar_libro(&libro2, 4);
+
+        assert_eq!(biblioteca.cant_disponibles(&libro1), 5);
+        assert_eq!(biblioteca.cant_disponibles(&libro2), 4);
+
+        biblioteca.decrementar_disponibilidad(&libro1);
+        assert_eq!(biblioteca.cant_disponibles(&libro1), 4);
+
+        biblioteca.incrementar_disponibilidad(&libro1);
+        assert_eq!(biblioteca.cant_disponibles(&libro1), 5);
+
+        // Probar préstamo
+        let mut fecha_vencimiento = Fecha::fecha_actual();
+        fecha_vencimiento.sumar_dias(7);
+        assert!(biblioteca.prestar(&cliente1, &libro1, &fecha_vencimiento));
+        assert_eq!(biblioteca.cant_disponibles(&libro1), 4);
+        assert_eq!(biblioteca.cant_prestamos_cli(&cliente1), 1);
+
+        // Probar límite de 5 préstamos
+        for _ in 0..4 {
+            assert!(biblioteca.prestar(&cliente1, &libro2, &fecha_vencimiento));
+        }
+        assert_eq!(biblioteca.cant_prestamos_cli(&cliente1), 5);
+        assert!(!biblioteca.prestar(&cliente1, &libro1, &fecha_vencimiento)); // falla por límite
+
+        // Probar préstamo sin copias
+        for _ in 0..2 {
+            biblioteca.decrementar_disponibilidad(&libro2);
+        }
+        assert!(!biblioteca.prestar(&cliente2, &libro2, &fecha_vencimiento)); // falla por no haber copias
+
+        // Probar buscar préstamo
+        assert!(biblioteca.buscar_prestamo(&libro1, &cliente1).is_some());
+        assert!(biblioteca.buscar_prestamo(&libro1, &cliente2).is_none());
+
+        // // Probar préstamos a vencer
+        let prestamos_proximos = biblioteca.prestamos_a_vencer(10);
+        assert_eq!(prestamos_proximos.len(), 5); // 5 préstamos de cliente1
+
+        // Probar préstamos vencidos
+        let mut fecha_pasada = Fecha::fecha_actual();
+        fecha_pasada.restar_dias(1);
+        biblioteca.prestar(&cliente2, &libro1, &fecha_pasada);
+        let prestamos_vencidos = biblioteca.prestamos_vencidos();
+        assert_eq!(prestamos_vencidos.len(), 1); // Solo el último préstamo está vencido
+
+        // Probar devolver libro
+        assert_eq!(biblioteca.cant_disponibles(&libro1), 3);
+        assert_eq!(biblioteca.cant_prestamos_cli(&cliente1), 5);
+        assert!(biblioteca.devolver_libro(&libro1, &cliente1));
+        assert_eq!(biblioteca.cant_disponibles(&libro1), 4); // Se incrementa al devolver
+        assert_eq!(biblioteca.cant_prestamos_cli(&cliente1), 4); // Un préstamo menos
+        assert!(!biblioteca.devolver_libro(&libro1, &cliente1)); // No se puede devolver dos veces
     }
 }

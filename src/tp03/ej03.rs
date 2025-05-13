@@ -1,107 +1,83 @@
+#![allow(dead_code, unused_variables)]
+
+use chrono::{Datelike, Duration, Local, NaiveDate};
+
 #[derive(Debug, Clone)]
 pub struct Fecha {
-    pub año: u16,
-    pub dia: u8,
-    pub mes: u8,
+    pub año: i32,
+    pub dia: u32,
+    pub mes: u32,
 }
 
-// TODO: hacer un wrapper con alguna dependencia de fechas
 impl Fecha {
-    pub fn new(dia: u8, mes: u8, año: u16) -> Self {
+    pub fn new(dia: u32, mes: u32, año: i32) -> Self {
         Fecha { dia, mes, año }
     }
 
     pub fn es_fecha_valida(&self) -> bool {
-        if self.dia == 0 || self.mes == 0 || self.dia > 31 || self.mes > 12 {
-            return false;
-        }
-
-        let dias_x_mes = match self.mes {
-            4 | 6 | 9 | 11 => 30,
-            2 => {
-                if self.es_bisiesto() {
-                    29
-                } else {
-                    28
-                }
-            }
-            _ => 31,
-        };
-
-        self.dia <= dias_x_mes
+        NaiveDate::from_ymd_opt(self.año, self.mes, self.dia).is_some()
     }
 
     pub fn es_bisiesto(&self) -> bool {
         (self.año % 4 == 0 && self.año % 100 != 0) || (self.año % 400 == 0)
     }
 
-    pub fn sumar_dias(&mut self, dias: u8) {
-        let mut dias_restantes = dias;
-        while dias_restantes > 0 {
-            let dias_en_mes = match self.mes {
-                4 | 6 | 9 | 11 => 30,
-                2 => {
-                    if self.es_bisiesto() {
-                        29
-                    } else {
-                        28
-                    }
-                }
-                _ => 31,
-            };
+    pub fn sumar_dias(&mut self, dias: i64) {
+        let date = NaiveDate::from_ymd_opt(self.año, self.mes, self.dia).unwrap();
+        let date = date + Duration::days(dias);
 
-            let dias_hasta_fin_mes = dias_en_mes - self.dia + 1;
-            if dias_restantes >= dias_hasta_fin_mes {
-                dias_restantes -= dias_hasta_fin_mes;
-                self.dia = 1;
-                self.mes += 1;
-                if self.mes > 12 {
-                    self.mes = 1;
-                    self.año += 1;
-                }
-            } else {
-                self.dia += dias_restantes;
-                dias_restantes = 0;
-            }
-        }
+        self.dia = date.day();
+        self.mes = date.month();
+        self.año = date.year();
     }
 
-    pub fn restar_dias(&mut self, dias: u8) {
-        let mut dias_restantes = dias;
-        while dias_restantes > 0 {
-            if dias_restantes >= self.dia {
-                dias_restantes -= self.dia;
-                self.mes -= 1;
-                if self.mes == 0 {
-                    self.mes = 12;
-                    self.año -= 1;
-                }
-                self.dia = match self.mes {
-                    4 | 6 | 9 | 11 => 30,
-                    2 => {
-                        if self.es_bisiesto() {
-                            29
-                        } else {
-                            28
-                        }
-                    }
-                    _ => 31,
-                };
-            } else {
-                self.dia -= dias_restantes;
-                dias_restantes = 0;
-            }
-        }
+    pub fn restar_dias(&mut self, dias: i64) {
+        let date = NaiveDate::from_ymd_opt(self.año, self.mes, self.dia).unwrap();
+        let date = date - Duration::days(dias);
+
+        self.dia = date.day();
+        self.mes = date.month();
+        self.año = date.year();
     }
 
-    pub fn es_mayor(&self, fecha: Fecha) -> bool {
-        let t1 = self.dia as u16 + self.mes as u16 + self.año;
-        let t2 = fecha.dia as u16 + fecha.mes as u16 + fecha.año;
+    pub fn es_mayor(&self, fecha: &Fecha) -> bool {
+        let date1 = match NaiveDate::from_ymd_opt(self.año, self.mes, self.dia) {
+            Some(date) => date,
+            None => return false,
+        };
 
-        t1 > t2
+        let date2 = match NaiveDate::from_ymd_opt(fecha.año, fecha.mes, fecha.dia) {
+            Some(date) => date,
+            None => return true,
+        };
+
+        date1 > date2
+    }
+
+    pub fn es_menor(&self, fecha: Fecha) -> bool {
+        let date1 = match NaiveDate::from_ymd_opt(self.año, self.mes, self.dia) {
+            Some(date) => date,
+            None => return false,
+        };
+
+        let date2 = match NaiveDate::from_ymd_opt(fecha.año, fecha.mes, fecha.dia) {
+            Some(date) => date,
+            None => return true,
+        };
+
+        date1 < date2
     }
 
     pub fn comparar(&self, f: &Fecha) -> bool {
         self.dia == f.dia && self.mes == f.mes && self.año == f.año
+    }
+
+    pub fn fecha_actual() -> Self {
+        let hoy = Local::now().date_naive();
+        Fecha {
+            dia: hoy.day(),
+            mes: hoy.month(),
+            año: hoy.year(),
+        }
     }
 }

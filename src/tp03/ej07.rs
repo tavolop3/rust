@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 pub struct ConcesionarioAuto {
     nombre: String,
     direccion: String,

@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 pub struct Triangulo(f32, f32, f32);
 
 #[derive(Debug, PartialEq)]

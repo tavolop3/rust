@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables, unused_assignments)]
+
 #[allow(dead_code)]
 pub struct Producto {
     precio: f64,

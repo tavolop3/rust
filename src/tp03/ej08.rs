@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 #[derive(Clone, Debug)]
 pub struct Cancion {
     titulo: String,

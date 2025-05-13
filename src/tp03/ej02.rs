@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 pub struct Rectangulo {
     longitud: f64,
     ancho: f64,
