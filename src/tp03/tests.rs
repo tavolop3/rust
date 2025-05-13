@@ -52,9 +52,9 @@ mod tests_tp03 {
         let t_eq = Triangulo::new(1.0, 1.0, 1.0);
         let t_is = Triangulo::new(5.0, 5.0, 6.0);
         let t_es = Triangulo::new(3.0, 4.0, 5.0);
-        assert_eq!(t_eq.determinar_tipo(), TipoTriangulo::EQUILATERO);
-        assert_eq!(t_is.determinar_tipo(), TipoTriangulo::ISOCELES);
-        assert_eq!(t_es.determinar_tipo(), TipoTriangulo::ESCALENO);
+        assert!(matches!(t_eq.determinar_tipo(), TipoTriangulo::EQUILATERO));
+        assert!(matches!(t_is.determinar_tipo(), TipoTriangulo::ISOCELES));
+        assert!(matches!(t_es.determinar_tipo(), TipoTriangulo::ESCALENO));
         assert_eq!(t_eq.calcular_area(), 0.4330127);
         assert_eq!(t_is.calcular_area(), 12.0);
         assert_eq!(t_es.calcular_area(), 6.0);
@@ -167,7 +167,7 @@ mod tests_tp03 {
         p.mover_cancion(&c1, 0);
         assert_eq!(p.get_posicion_cancion(&c1).unwrap(), 0);
 
-        assert!(p.get_canciones_genero(Genero::ROCK)[0].comparar(&c1));
+        assert!(p.get_canciones_genero(&Genero::ROCK)[0].comparar(&c1));
         assert_eq!(
             p.get_canciones_artista(String::from("Arctic Monkeys"))
                 .len(),

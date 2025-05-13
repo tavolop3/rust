@@ -47,7 +47,7 @@ pub enum Genero {
     Otros,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub enum Estado {
     Devuelto,
     EnPrestamo,
@@ -146,7 +146,7 @@ impl Biblioteca {
     pub fn cant_prestamos_cli(&self, cli: &Cliente) -> u8 {
         let mut cant_prestamos = 0;
         for p in &self.prestamos {
-            if p.cliente.igual(cli) && p.estado == Estado::EnPrestamo {
+            if p.cliente.igual(cli) && p.estado.igual(&Estado::EnPrestamo) {
                 cant_prestamos += 1;
             }
         }
@@ -233,6 +233,19 @@ impl Prestamo {
             fecha_vencimiento: fecha_vencimiento.clone(),
             fecha_devolucion: None,
             estado: Estado::EnPrestamo,
+        }
+    }
+}
+
+impl Estado {
+    pub fn igual(&self, estado: &Estado) -> bool {
+        self.a_str() == estado.a_str()
+    }
+
+    pub fn a_str(&self) -> String {
+        match self {
+            Estado::Devuelto => String::from("Devuelto"),
+            Estado::EnPrestamo => String::from("EnPrestamo"),
         }
     }
 }

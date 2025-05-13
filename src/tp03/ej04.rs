@@ -2,7 +2,7 @@
 
 pub struct Triangulo(f32, f32, f32);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum TipoTriangulo {
     EQUILATERO,
     ISOCELES,

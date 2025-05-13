@@ -7,7 +7,7 @@ pub struct Cancion {
     genero: Genero,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum Genero {
     ROCK,
     POP,
@@ -96,10 +96,10 @@ impl Playlist {
         None
     }
 
-    pub fn get_canciones_genero(&self, genero: Genero) -> Vec<&Cancion> {
+    pub fn get_canciones_genero(&self, genero: &Genero) -> Vec<&Cancion> {
         let mut cs: Vec<&Cancion> = Vec::new();
         for c in &self.canciones {
-            if c.genero == genero {
+            if c.genero.igual(genero) {
                 cs.push(c);
             }
         }
@@ -130,5 +130,21 @@ impl Playlist {
 
     pub fn get_len_canciones(&self) -> usize {
         self.canciones.len()
+    }
+}
+
+impl Genero {
+    pub fn igual(&self, genero: &Genero) -> bool {
+        self.a_str() == genero.a_str()
+    }
+
+    pub fn a_str(&self) -> String {
+        match self {
+            Genero::ROCK => String::from("ROCK"),
+            Genero::POP => String::from("POP"),
+            Genero::RAP => String::from("RAP"),
+            Genero::JAZZ => String::from("JAZZ"),
+            Genero::OTROS => String::from("OTROS"),
+        }
     }
 }
