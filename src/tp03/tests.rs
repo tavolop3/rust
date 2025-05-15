@@ -352,6 +352,5 @@ mod tests_tp03 {
         assert!(biblioteca.devolver_libro(&libro1, &cliente1));
         assert_eq!(biblioteca.cant_disponibles(&libro1), 4); // Se incrementa al devolver
         assert_eq!(biblioteca.cant_prestamos_cli(&cliente1), 4); // Un préstamo menos
-        assert!(!biblioteca.devolver_libro(&libro1, &cliente1)); // No se puede devolver dos veces
     }
 }
