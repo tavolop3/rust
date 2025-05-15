@@ -1,11 +1,10 @@
 #[cfg(test)]
 mod tests_tp03 {
-    use crate::tp03::ej01::Persona;
-    use crate::tp03::ej02::Rectangulo;
     use crate::tp03::ej03::Fecha;
 
     #[test]
     fn test_ej01_persona() {
+        use crate::tp03::ej01::Persona;
         let mut p = Persona::new("Tao".to_string(), Some("1 e/2 y 3".to_string()), 33);
         assert_eq!(p.obtener_edad(), 33);
 
@@ -18,6 +17,7 @@ mod tests_tp03 {
 
     #[test]
     fn test_ej02_rectangulo() {
+        use crate::tp03::ej02::Rectangulo;
         let r = Rectangulo::new(30.0, 30.0);
         assert_eq!(r.calcular_area(), 900.0);
         assert_eq!(r.calcular_perimetro(), 120.0);

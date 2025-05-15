@@ -1,7 +1,7 @@
 #![allow(unused_variables, dead_code)]
 
 use super::ej03::Fecha;
-use ::std::collections::VecDeque;
+use std::collections::VecDeque;
 
 pub struct Veterinaria {
     nombre: String,
