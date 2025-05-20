@@ -111,16 +111,19 @@ impl Biblioteca {
     }
 
     pub fn devolver_libro(&mut self, lib: &Libro, cli: &Cliente) -> bool {
-        let prestamo = self.buscar_prestamo(lib, cli);
-        if let Some(mut p) = prestamo {
-            p.estado = Estado::Devuelto;
-            p.fecha_devolucion = Some(Fecha::fecha_actual());
-            self.incrementar_disponibilidad(&p.libro);
-            self.quitar_prestamo(cli, lib);
-            true
-        } else {
-            false
+        let mut encontrado = false;
+        for p in &mut self.prestamos {
+            if p.libro.igual(lib) && p.cliente.igual(cli) {
+                p.estado = Estado::Devuelto;
+                p.fecha_devolucion = Some(Fecha::fecha_actual());
+                encontrado = true;
+            }
         }
+        if encontrado {
+            self.incrementar_disponibilidad(lib);
+            return true;
+        }
+        false
     }
 
     pub fn incrementar_disponibilidad(&mut self, lib: &Libro) {

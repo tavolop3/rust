@@ -12,12 +12,13 @@ pub struct Examen {
     nota: f32,
 }
 
+#[derive(Clone)]
 pub struct Informe {
-    pub nombre_estudiante: String,
-    pub cant_rendidos: u8,
-    pub promedio: f32,
-    pub nota_mas_alta: Examen,
-    pub nota_mas_baja: Examen,
+    nombre_estudiante: String,
+    cant_rendidos: u8,
+    promedio: f32,
+    nota_mas_alta: Examen,
+    nota_mas_baja: Examen,
 }
 
 impl Examen {
@@ -109,6 +110,14 @@ impl Estudiante {
         );
         Some(informe)
     }
+
+    pub fn get_nombre(&self) -> String {
+        self.nombre.clone()
+    }
+
+    pub fn get_examenes(&self) -> Vec<Examen> {
+        self.examenes.clone()
+    }
 }
 
 impl Informe {
@@ -129,15 +138,9 @@ impl Informe {
     }
 }
 
-//esto lo tenia en un archivo general de tests
-//deberia separarlo? si es asi lo separo en mas funciones
-//yo directamente testee todo en una sola función
-//tambien me gustaria hacer un getter por campo del informe, no hacerlo publico
+// al final lo dejé en un solo test por simplicidad
 #[test]
-fn test_ej06_examenes() {
-    use crate::tp03::ej06::Estudiante;
-    use crate::tp03::ej06::Examen;
-
+fn examenes() {
     let ex1 = Examen::new("Rust", 8.5);
     let ex2 = Examen::new("OO2", 7.0);
     let ex3 = Examen::new("SO", 9.0);
@@ -151,10 +154,30 @@ fn test_ej06_examenes() {
     assert!(est_vacio.obtener_calificacion_mas_alta().is_none());
     assert!(est_vacio.obtener_calificacion_mas_baja().is_none());
 
+    //tests para el ejercicio de parcial
+
     let informe_lleno = est.generar_informe();
     assert!(informe_lleno.is_some());
     assert!(est_vacio.generar_informe().is_none());
 
-    // acá quiero testear cada campo
-    // assert_eq!(informe_lleno.unwrap().nombre_estudiante, est.);
+    assert_eq!(
+        informe_lleno.clone().unwrap().nombre_estudiante,
+        est.get_nombre()
+    );
+    assert_eq!(
+        informe_lleno.clone().unwrap().cant_rendidos,
+        est.get_examenes().len() as u8
+    );
+    assert_eq!(
+        informe_lleno.clone().unwrap().promedio,
+        est.obtener_promedio()
+    );
+    assert_eq!(
+        informe_lleno.clone().unwrap().nota_mas_alta.nota,
+        est.obtener_calificacion_mas_alta().unwrap().nota
+    );
+    assert_eq!(
+        informe_lleno.clone().unwrap().nota_mas_baja.nota,
+        est.obtener_calificacion_mas_baja().unwrap().nota
+    );
 }
