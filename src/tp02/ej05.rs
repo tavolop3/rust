@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 use std::collections::HashMap;
 
 // pub fn dup_vals(arr: [f64; 5]) -> [f64;5] {

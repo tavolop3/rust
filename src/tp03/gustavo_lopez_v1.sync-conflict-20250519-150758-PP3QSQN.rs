@@ -12,13 +12,12 @@ pub struct Examen {
     nota: f32,
 }
 
-#[derive(Clone)]
 pub struct Informe {
-    nombre_estudiante: String,
-    cant_rendidos: u8,
-    promedio: f32,
-    nota_mas_alta: Examen,
-    nota_mas_baja: Examen,
+    pub nombre_estudiante: String,
+    pub cant_rendidos: u8,
+    pub promedio: f32,
+    pub nota_mas_alta: Examen,
+    pub nota_mas_baja: Examen,
 }
 
 impl Examen {
@@ -110,14 +109,6 @@ impl Estudiante {
         );
         Some(informe)
     }
-
-    pub fn get_nombre(&self) -> String {
-        self.nombre.clone()
-    }
-
-    pub fn get_examenes(&self) -> Vec<Examen> {
-        self.examenes.clone()
-    }
 }
 
 impl Informe {
@@ -138,46 +129,32 @@ impl Informe {
     }
 }
 
-// al final lo dejé en un solo test por simplicidad
-// #[test]
-// fn examenes() {
-//     let ex1 = Examen::new("Rust", 8.5);
-//     let ex2 = Examen::new("OO2", 7.0);
-//     let ex3 = Examen::new("SO", 9.0);
-//     let est = Estudiante::new("Alan Turing", 1, vec![ex1, ex2, ex3]);
-//     assert_eq!(est.obtener_promedio(), (8.5 + 7.0 + 9.0) / 3.0);
-//     assert_eq!(est.obtener_calificacion_mas_alta().unwrap().get_nota(), 9.0);
-//     assert_eq!(est.obtener_calificacion_mas_baja().unwrap().get_nota(), 7.0);
-//     let est_vacio = Estudiante::new("Ana Gómez", 67890, vec![]);
-//
-//     assert_eq!(est_vacio.obtener_promedio(), 0.0);
-//     assert!(est_vacio.obtener_calificacion_mas_alta().is_none());
-//     assert!(est_vacio.obtener_calificacion_mas_baja().is_none());
-//
-//     //tests para el ejercicio de parcial
-//
-//     let informe_lleno = est.generar_informe();
-//     assert!(informe_lleno.is_some());
-//     assert!(est_vacio.generar_informe().is_none());
-//
-//     assert_eq!(
-//         informe_lleno.clone().unwrap().nombre_estudiante,
-//         est.get_nombre()
-//     );
-//     assert_eq!(
-//         informe_lleno.clone().unwrap().cant_rendidos,
-//         est.get_examenes().len() as u8
-//     );
-//     assert_eq!(
-//         informe_lleno.clone().unwrap().promedio,
-//         est.obtener_promedio()
-//     );
-//     assert_eq!(
-//         informe_lleno.clone().unwrap().nota_mas_alta.nota,
-//         est.obtener_calificacion_mas_alta().unwrap().nota
-//     );
-//     assert_eq!(
-//         informe_lleno.clone().unwrap().nota_mas_baja.nota,
-//         est.obtener_calificacion_mas_baja().unwrap().nota
-//     );
-// }
+//esto lo tenia en un archivo general de tests
+//deberia separarlo? si es asi lo separo en mas funciones
+//yo directamente testee todo en una sola función
+//tambien me gustaria hacer un getter por campo del informe, no hacerlo publico
+#[test]
+fn test_ej06_examenes() {
+    use crate::tp03::ej06::Estudiante;
+    use crate::tp03::ej06::Examen;
+
+    let ex1 = Examen::new("Rust", 8.5);
+    let ex2 = Examen::new("OO2", 7.0);
+    let ex3 = Examen::new("SO", 9.0);
+    let est = Estudiante::new("Alan Turing", 1, vec![ex1, ex2, ex3]);
+    assert_eq!(est.obtener_promedio(), (8.5 + 7.0 + 9.0) / 3.0);
+    assert_eq!(est.obtener_calificacion_mas_alta().unwrap().get_nota(), 9.0);
+    assert_eq!(est.obtener_calificacion_mas_baja().unwrap().get_nota(), 7.0);
+    let est_vacio = Estudiante::new("Ana Gómez", 67890, vec![]);
+
+    assert_eq!(est_vacio.obtener_promedio(), 0.0);
+    assert!(est_vacio.obtener_calificacion_mas_alta().is_none());
+    assert!(est_vacio.obtener_calificacion_mas_baja().is_none());
+
+    let informe_lleno = est.generar_informe();
+    assert!(informe_lleno.is_some());
+    assert!(est_vacio.generar_informe().is_none());
+
+    // acá quiero testear cada campo
+    // assert_eq!(informe_lleno.unwrap().nombre_estudiante, est.);
+}

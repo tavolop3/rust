@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 pub fn is_prime(n: u64) -> bool {
     if n <= 1 {
         return false;

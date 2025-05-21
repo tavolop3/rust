@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 use crate::tp02::ej01::is_even;
 
 pub fn n_odds(arr: [u64; 5]) -> u64 {

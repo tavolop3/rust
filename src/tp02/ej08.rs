@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 // Definir la función llamada sumar_arreglos que recibe 2 arreglos del mismo tamaño de
 // números flotantes y retorna un nuevo arreglo que contiene la suma de los elementos de los
 // arreglos pasados por parámetro, correspondiéndose el resultado con cada posición de los

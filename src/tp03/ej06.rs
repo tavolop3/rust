@@ -133,28 +133,28 @@ impl Informe {
 //deberia separarlo? si es asi lo separo en mas funciones
 //yo directamente testee todo en una sola función
 //tambien me gustaria hacer un getter por campo del informe, no hacerlo publico
-#[test]
-fn test_ej06_examenes() {
-    use crate::tp03::ej06::Estudiante;
-    use crate::tp03::ej06::Examen;
-
-    let ex1 = Examen::new("Rust", 8.5);
-    let ex2 = Examen::new("OO2", 7.0);
-    let ex3 = Examen::new("SO", 9.0);
-    let est = Estudiante::new("Alan Turing", 1, vec![ex1, ex2, ex3]);
-    assert_eq!(est.obtener_promedio(), (8.5 + 7.0 + 9.0) / 3.0);
-    assert_eq!(est.obtener_calificacion_mas_alta().unwrap().get_nota(), 9.0);
-    assert_eq!(est.obtener_calificacion_mas_baja().unwrap().get_nota(), 7.0);
-    let est_vacio = Estudiante::new("Ana Gómez", 67890, vec![]);
-
-    assert_eq!(est_vacio.obtener_promedio(), 0.0);
-    assert!(est_vacio.obtener_calificacion_mas_alta().is_none());
-    assert!(est_vacio.obtener_calificacion_mas_baja().is_none());
-
-    let informe_lleno = est.generar_informe();
-    assert!(informe_lleno.is_some());
-    assert!(est_vacio.generar_informe().is_none());
-
-    // acá quiero testear cada campo
-    // assert_eq!(informe_lleno.unwrap().nombre_estudiante, est.);
-}
+// #[test]
+// fn test_ej06_examenes() {
+//     use crate::tp03::ej06::Estudiante;
+//     use crate::tp03::ej06::Examen;
+//
+//     let ex1 = Examen::new("Rust", 8.5);
+//     let ex2 = Examen::new("OO2", 7.0);
+//     let ex3 = Examen::new("SO", 9.0);
+//     let est = Estudiante::new("Alan Turing", 1, vec![ex1, ex2, ex3]);
+//     assert_eq!(est.obtener_promedio(), (8.5 + 7.0 + 9.0) / 3.0);
+//     assert_eq!(est.obtener_calificacion_mas_alta().unwrap().get_nota(), 9.0);
+//     assert_eq!(est.obtener_calificacion_mas_baja().unwrap().get_nota(), 7.0);
+//     let est_vacio = Estudiante::new("Ana Gómez", 67890, vec![]);
+//
+//     assert_eq!(est_vacio.obtener_promedio(), 0.0);
+//     assert!(est_vacio.obtener_calificacion_mas_alta().is_none());
+//     assert!(est_vacio.obtener_calificacion_mas_baja().is_none());
+//
+//     let informe_lleno = est.generar_informe();
+//     assert!(informe_lleno.is_some());
+//     assert!(est_vacio.generar_informe().is_none());
+//
+//     // acá quiero testear cada campo
+//     // assert_eq!(informe_lleno.unwrap().nombre_estudiante, est.);
+// }

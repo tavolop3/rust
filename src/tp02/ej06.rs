@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_variables)]
 
 // Definir la función llamada longitud_de_cadenas que recibe un arreglo de String y retorna
 // un arreglo con la longitud de las cadenas del parámetro, correspondiéndose en posición del
