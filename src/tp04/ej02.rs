@@ -51,6 +51,10 @@ fn viven_en<'a>(personas: &Vec<Persona<'a>>, ciudad: &'a str) -> bool {
     personas.iter().all(|p| p.ciudad == ciudad)
 }
 
+fn vive_almenos_uno<'a>(personas: &Vec<Persona<'a>>, ciudad: &'a str) -> bool {
+    personas.iter().any(|p| p.ciudad == ciudad)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -80,6 +84,13 @@ mod test {
         let personas = data();
         assert!(viven_en(&personas, "la plata"));
         assert!(!viven_en(&personas, "capital"));
+    }
+
+    #[test]
+    fn test_ej02_d_vive_almenos_uno() {
+        let personas = data();
+        assert!(vive_almenos_uno(&personas, "la plata"));
+        assert!(!vive_almenos_uno(&personas, "capital"));
     }
 }
 
