@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_variables)]
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 struct Persona<'a> {
     nombre: &'a str,
     apellido: &'a str,
@@ -55,6 +55,10 @@ fn vive_almenos_uno<'a>(personas: &Vec<Persona<'a>>, ciudad: &'a str) -> bool {
     personas.iter().any(|p| p.ciudad == ciudad)
 }
 
+fn tiene_persona<'a>(personas: &Vec<Persona<'a>>, persona: &Persona<'a>) -> bool {
+    personas.iter().any(|p| p == persona)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -92,6 +96,14 @@ mod test {
         assert!(vive_almenos_uno(&personas, "la plata"));
         assert!(!vive_almenos_uno(&personas, "capital"));
     }
+
+    fn test_ej02_e_existe_persona() {
+        let personas = data();
+        let persona = &personas[0];
+        assert!(tiene_persona(&personas, persona));
+        let persona = &Persona::new("no", "existe", "en", "el vec", 33.0, 33);
+        assert!(!tiene_persona(&personas, persona));
+    }
 }
 
 /*
@@ -122,8 +134,7 @@ d- Escriba una función que reciba un vector de personas y un nombre de una ciud
 retorna true si al menos vive una persona en la ciudad pasada por parámetro,, false caso
 contrario.
 
-e- Escriba una función que reciba un arreglo de personas y una persona y retorna true si la
-persona existe en el arreglo, false caso contrario
+e- Escriba una función que reciba un arreglo de personas y una persona y retorna true si la persona existe en el arreglo, false caso contrario
 
 f -Escriba una función que reciba un arreglo de personas y retorna un arreglo con las
 edades de las personas.
