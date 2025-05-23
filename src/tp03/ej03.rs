@@ -2,7 +2,7 @@
 
 use chrono::{Datelike, Duration, Local, NaiveDate};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Fecha {
     pub año: i32,
     pub dia: u32,
