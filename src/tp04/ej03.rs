@@ -153,91 +153,51 @@ impl StreamingRust {
     }
 
     pub fn metodo_mas_utilizado_activos(&self) -> Option<MetodoPago> {
-        let mut cantidades: HashMap<MetodoPago, usize> = HashMap::new();
-        let mut max_cant: usize = 0;
-        let mut metodo_max = None;
-        for u in self.usuarios_activos.iter() {
-            let metodo_act = u.subscripcion.metodo_pago.clone();
-            cantidades
-                .entry(metodo_act.clone())
-                .and_modify(|c| {
-                    *c += 1;
-                    if *c > max_cant {
-                        metodo_max = Some(metodo_act);
-                        max_cant = *c;
-                    };
-                })
-                .or_insert(1);
-        }
-        metodo_max
+        Self::metodo_mas_utilizado_generico(&self.usuarios_activos)
     }
 
     pub fn metodo_mas_utilizado(&self) -> Option<MetodoPago> {
-        let mut cantidades: HashMap<MetodoPago, usize> = HashMap::new();
+        Self::metodo_mas_utilizado_generico(
+            &[
+                self.usuarios_activos.clone(),
+                self.usuarios_cancelados.clone(),
+            ]
+            .concat(),
+        )
+    }
+
+    pub fn subscripcion_mas_contratada_generico(usuarios: &[Usuario]) -> Option<TipoSubscripcion> {
+        let mut cantidades: HashMap<TipoSubscripcion, usize> = HashMap::new();
         let mut max_cant: usize = 0;
-        let mut metodo_max = None;
-        let usuarios_iter = self
-            .usuarios_activos
-            .iter()
-            .chain(self.usuarios_cancelados.iter());
-        for u in usuarios_iter {
-            let metodo_act = u.subscripcion.metodo_pago.clone();
+        let mut subscripcion_max: Option<TipoSubscripcion> = None;
+        for u in usuarios.iter() {
+            let sub_act = u.subscripcion.tipo_subscripcion.clone();
             cantidades
-                .entry(metodo_act.clone())
+                .entry(sub_act.clone())
                 .and_modify(|c| {
                     *c += 1;
                     if *c > max_cant {
-                        metodo_max = Some(metodo_act);
+                        subscripcion_max = Some(sub_act);
                         max_cant = *c;
                     };
                 })
                 .or_insert(1);
         }
-        metodo_max
+        subscripcion_max
     }
 
     pub fn subscripcion_mas_contratada_activos(&self) -> Option<TipoSubscripcion> {
-        let mut cantidades: HashMap<TipoSubscripcion, usize> = HashMap::new();
-        let mut max_cant: usize = 0;
-        let mut subscripcion_max: Option<TipoSubscripcion> = None;
-        for u in self.usuarios_activos.iter() {
-            let sub_act = u.subscripcion.tipo_subscripcion.clone();
-            cantidades
-                .entry(sub_act.clone())
-                .and_modify(|c| {
-                    *c += 1;
-                    if *c > max_cant {
-                        subscripcion_max = Some(sub_act);
-                        max_cant = *c;
-                    };
-                })
-                .or_insert(1);
-        }
-        subscripcion_max
+        Self::subscripcion_mas_contratada_generico(&self.usuarios_activos)
     }
 
     pub fn subscripcion_mas_contratada(&self) -> Option<TipoSubscripcion> {
-        let mut cantidades: HashMap<TipoSubscripcion, usize> = HashMap::new();
-        let mut max_cant: usize = 0;
-        let mut subscripcion_max: Option<TipoSubscripcion> = None;
-        let usuarios_iter = self
-            .usuarios_activos
-            .iter()
-            .chain(self.usuarios_cancelados.iter());
-        for u in usuarios_iter {
-            let sub_act = u.subscripcion.tipo_subscripcion.clone();
-            cantidades
-                .entry(sub_act.clone())
-                .and_modify(|c| {
-                    *c += 1;
-                    if *c > max_cant {
-                        subscripcion_max = Some(sub_act);
-                        max_cant = *c;
-                    };
-                })
-                .or_insert(1);
-        }
-        subscripcion_max
+        Self::subscripcion_mas_contratada_generico(
+            &[
+                self.usuarios_activos.clone(),
+                self.usuarios_cancelados.clone(),
+            ]
+            .concat(),
+        )
     }
 }
 
