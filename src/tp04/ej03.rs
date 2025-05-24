@@ -3,28 +3,28 @@ use std::collections::HashMap;
 
 use crate::tp03::ej03::Fecha;
 
-struct StreamingRust {
+pub struct StreamingRust {
     usuarios_activos: Vec<Usuario>,
     usuarios_cancelados: Vec<Usuario>,
 }
 
-#[derive(PartialEq)]
-struct Usuario {
+#[derive(PartialEq, Clone)]
+pub struct Usuario {
     nombre: String,
     subscripcion: Subscripcion,
 }
 
-#[derive(PartialEq)]
-struct Subscripcion {
+#[derive(PartialEq, Clone)]
+pub struct Subscripcion {
     costo_mensual: f32,
-    duarcion: u8,
+    duracion: u8,
     fecha_inicio: Fecha,
     metodo_pago: MetodoPago,
     tipo_subscripcion: TipoSubscripcion,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
-enum MetodoPago {
+pub enum MetodoPago {
     Efectivo,
     MercadoPago { alias_mp: String },
     TarjetaCredito { num_tarjeta: String },
@@ -32,8 +32,8 @@ enum MetodoPago {
     Cripto { direccion: String, moneda: String },
 }
 
-#[derive(PartialEq)]
-enum TipoSubscripcion {
+#[derive(PartialEq, Clone, Eq, Hash, Debug)]
+pub enum TipoSubscripcion {
     Basic,
     Classic,
     Super,
@@ -57,12 +57,42 @@ impl TipoSubscripcion {
     }
 }
 
-impl StreamingRust {
-    pub fn crear_usr(&mut self, nombre: String, subscripcion: Subscripcion) {
-        self.usuarios_activos.push(Usuario {
+impl Usuario {
+    pub fn new(nombre: String, subscripcion: Subscripcion) -> Self {
+        Usuario {
             nombre,
             subscripcion,
-        })
+        }
+    }
+}
+
+impl Subscripcion {
+    pub fn new(
+        costo_mensual: f32,
+        duracion: u8,
+        metodo_pago: MetodoPago,
+        tipo_subscripcion: TipoSubscripcion,
+    ) -> Self {
+        Subscripcion {
+            costo_mensual,
+            duracion,
+            fecha_inicio: Fecha::fecha_actual(),
+            metodo_pago,
+            tipo_subscripcion,
+        }
+    }
+}
+
+impl StreamingRust {
+    pub fn new() -> Self {
+        StreamingRust {
+            usuarios_activos: vec![],
+            usuarios_cancelados: vec![],
+        }
+    }
+
+    pub fn crear_usr(&mut self, usuario: &Usuario) {
+        self.usuarios_activos.push(usuario.clone());
     }
 
     fn buscar_usuario(&mut self, usuario: &Usuario) -> Option<&mut Usuario> {
@@ -102,7 +132,27 @@ impl StreamingRust {
         false
     }
 
-    pub fn metodo_mas_utilizado(&self) -> Option<MetodoPago> {
+    fn metodo_mas_utilizado_generico(coleccion: &[Usuario]) -> Option<MetodoPago> {
+        let mut cantidades: HashMap<MetodoPago, usize> = HashMap::new();
+        let mut max_cant: usize = 0;
+        let mut metodo_max = None;
+        for u in coleccion.iter() {
+            let metodo_act = u.subscripcion.metodo_pago.clone();
+            cantidades
+                .entry(metodo_act.clone())
+                .and_modify(|c| {
+                    *c += 1;
+                    if *c > max_cant {
+                        metodo_max = Some(metodo_act);
+                        max_cant = *c;
+                    };
+                })
+                .or_insert(1);
+        }
+        metodo_max
+    }
+
+    pub fn metodo_mas_utilizado_activos(&self) -> Option<MetodoPago> {
         let mut cantidades: HashMap<MetodoPago, usize> = HashMap::new();
         let mut max_cant: usize = 0;
         let mut metodo_max = None;
@@ -121,12 +171,214 @@ impl StreamingRust {
         }
         metodo_max
     }
+
+    pub fn metodo_mas_utilizado(&self) -> Option<MetodoPago> {
+        let mut cantidades: HashMap<MetodoPago, usize> = HashMap::new();
+        let mut max_cant: usize = 0;
+        let mut metodo_max = None;
+        let usuarios_iter = self
+            .usuarios_activos
+            .iter()
+            .chain(self.usuarios_cancelados.iter());
+        for u in usuarios_iter {
+            let metodo_act = u.subscripcion.metodo_pago.clone();
+            cantidades
+                .entry(metodo_act.clone())
+                .and_modify(|c| {
+                    *c += 1;
+                    if *c > max_cant {
+                        metodo_max = Some(metodo_act);
+                        max_cant = *c;
+                    };
+                })
+                .or_insert(1);
+        }
+        metodo_max
+    }
+
+    pub fn subscripcion_mas_contratada_activos(&self) -> Option<TipoSubscripcion> {
+        let mut cantidades: HashMap<TipoSubscripcion, usize> = HashMap::new();
+        let mut max_cant: usize = 0;
+        let mut subscripcion_max: Option<TipoSubscripcion> = None;
+        for u in self.usuarios_activos.iter() {
+            let sub_act = u.subscripcion.tipo_subscripcion.clone();
+            cantidades
+                .entry(sub_act.clone())
+                .and_modify(|c| {
+                    *c += 1;
+                    if *c > max_cant {
+                        subscripcion_max = Some(sub_act);
+                        max_cant = *c;
+                    };
+                })
+                .or_insert(1);
+        }
+        subscripcion_max
+    }
+
+    pub fn subscripcion_mas_contratada(&self) -> Option<TipoSubscripcion> {
+        let mut cantidades: HashMap<TipoSubscripcion, usize> = HashMap::new();
+        let mut max_cant: usize = 0;
+        let mut subscripcion_max: Option<TipoSubscripcion> = None;
+        let usuarios_iter = self
+            .usuarios_activos
+            .iter()
+            .chain(self.usuarios_cancelados.iter());
+        for u in usuarios_iter {
+            let sub_act = u.subscripcion.tipo_subscripcion.clone();
+            cantidades
+                .entry(sub_act.clone())
+                .and_modify(|c| {
+                    *c += 1;
+                    if *c > max_cant {
+                        subscripcion_max = Some(sub_act);
+                        max_cant = *c;
+                    };
+                })
+                .or_insert(1);
+        }
+        subscripcion_max
+    }
 }
 
-// cantidades
-//     .entry(u.subscripcion.metodo_pago.clone())
-//     .and_modify(|c| *c += 1)
-//     .or_insert(1);
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    struct TestData {
+        sistema: StreamingRust,
+        usuarios: Vec<Usuario>,
+    }
+
+    fn setup() -> TestData {
+        let sub_basic_efectivo =
+            Subscripcion::new(5000.0, 12, MetodoPago::Efectivo, TipoSubscripcion::Basic);
+        let sub_classic_efectivo =
+            Subscripcion::new(5000.0, 12, MetodoPago::Efectivo, TipoSubscripcion::Classic);
+        let sub_super_credito = Subscripcion::new(
+            5000.0,
+            12,
+            MetodoPago::TarjetaCredito {
+                num_tarjeta: 123.to_string(),
+            },
+            TipoSubscripcion::Super,
+        );
+        let sub_classic_cripto = Subscripcion::new(
+            5000.0,
+            12,
+            MetodoPago::Cripto {
+                direccion: "0x1829821".to_string(),
+                moneda: "ETH".to_string(),
+            },
+            TipoSubscripcion::Classic,
+        );
+
+        let u1 = Usuario::new("tao".to_string(), sub_basic_efectivo);
+        let u2 = Usuario::new("clasico".to_string(), sub_classic_efectivo);
+        let u3 = Usuario::new("super cred".to_string(), sub_super_credito);
+        let u4 = Usuario::new("classic cripto".to_string(), sub_classic_cripto);
+
+        let mut sr = StreamingRust::new();
+        sr.crear_usr(&u1);
+        sr.crear_usr(&u2);
+        sr.crear_usr(&u3);
+        sr.crear_usr(&u4);
+
+        TestData {
+            sistema: sr,
+            usuarios: vec![u1, u2, u3, u4],
+        }
+    }
+
+    #[test]
+    fn test_ej03_upgrade_sub() {
+        let mut data = setup();
+        let usuarios_pre = data.sistema.usuarios_activos.clone();
+        data.sistema.upgrade_subscripcion(&usuarios_pre[0]); // basic -> classic
+        data.sistema.upgrade_subscripcion(&usuarios_pre[1]); // classic -> super
+        let usuarios_post = data.sistema.usuarios_activos.clone();
+        assert_eq!(
+            usuarios_post[0].subscripcion.tipo_subscripcion,
+            TipoSubscripcion::Classic
+        );
+        assert!(usuarios_post[1].subscripcion.tipo_subscripcion == TipoSubscripcion::Super);
+    }
+
+    #[test]
+    fn test_ej03_downgrade_sub() {
+        let mut data = setup();
+        let usuarios_pre = data.usuarios.clone();
+        let usuarios_cancelados_pre = data.sistema.usuarios_cancelados.clone();
+        data.sistema.downgrade_subscripcion(&usuarios_pre[0]); // basic -> cancelado
+        data.sistema.downgrade_subscripcion(&usuarios_pre[1]); // classic -> basic
+        let usuarios_post = data.sistema.usuarios_activos.clone();
+        let usuarios_cancelados_post = data.sistema.usuarios_cancelados.clone();
+
+        assert!(usuarios_cancelados_pre.is_empty());
+        assert!(!usuarios_cancelados_post.is_empty());
+        assert_eq!(usuarios_post[1].nombre, "clasico".to_string());
+        assert_eq!(
+            usuarios_post[1].subscripcion.tipo_subscripcion,
+            TipoSubscripcion::Basic
+        );
+    }
+
+    #[test]
+    fn test_ej03_cancelar_sub() {
+        let mut data = setup();
+        let usuarios_pre = data.usuarios.clone();
+        let usuarios_cancelados_pre = data.sistema.usuarios_cancelados.clone();
+        data.sistema.cancelar_subscripcion(&usuarios_pre[0]);
+        let usuarios_post = data.sistema.usuarios_activos.clone();
+        let usuarios_cancelados_post = data.sistema.usuarios_cancelados.clone();
+
+        assert!(usuarios_cancelados_pre.is_empty());
+        assert_eq!(usuarios_pre[0].nombre, "tao".to_string());
+        assert!(!usuarios_cancelados_post.is_empty());
+        assert_ne!(usuarios_post[0].nombre, "tao".to_string());
+        assert_eq!(usuarios_cancelados_post[0].nombre, "tao".to_string());
+    }
+
+    #[test]
+    fn test_ej03_medio_mas_utilizado_activos() {
+        let data = setup();
+        let medio_max = data.sistema.metodo_mas_utilizado_activos();
+        assert_eq!(medio_max.unwrap(), MetodoPago::Efectivo);
+    }
+
+    #[test]
+    fn test_ej03_medio_mas_utilizado() {
+        let mut data = setup();
+        data.sistema.cancelar_subscripcion(&data.usuarios[0]);
+        let medio_max = data.sistema.metodo_mas_utilizado();
+        assert_eq!(medio_max.unwrap(), MetodoPago::Efectivo);
+    }
+
+    #[test]
+    fn test_ej03_sub_mas_contratada_activos() {
+        let data = setup();
+        let max_sub = data.sistema.subscripcion_mas_contratada_activos();
+        assert_eq!(max_sub.unwrap(), TipoSubscripcion::Classic);
+    }
+
+    #[test]
+    fn test_ej03_sub_mas_contratada() {
+        let mut data = setup();
+        let max_sub = data.sistema.subscripcion_mas_contratada();
+        assert_eq!(max_sub.unwrap(), TipoSubscripcion::Classic);
+
+        //creo 2 con basic asi es la mas contratada
+        let sub_basic_efectivo =
+            Subscripcion::new(5000.0, 12, MetodoPago::Efectivo, TipoSubscripcion::Basic);
+        let u5 = Usuario::new("basic inventado".to_string(), sub_basic_efectivo.clone());
+        let u6 = Usuario::new("basic inventado 2".to_string(), sub_basic_efectivo);
+        data.sistema.crear_usr(&u5);
+        data.sistema.crear_usr(&u6);
+
+        let max_sub = data.sistema.subscripcion_mas_contratada();
+        assert_eq!(max_sub.unwrap(), TipoSubscripcion::Basic);
+    }
+}
 
 // La plataforma de streaming "StreamingRust" ofrece distintos tipos de suscripciones
 // (Basic, Clasic, Super) a sus usuarios. Cada suscripción tiene un costo mensual y una
