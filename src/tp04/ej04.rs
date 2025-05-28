@@ -22,6 +22,7 @@ struct Venta {
     vendedor: Persona,
     cliente: Persona,
     medio_pago: MedioPago,
+    precio_final: Option<f64>, // el precio final puede o no estar computado
     fecha: Fecha,
     registros: Vec<Registro>,
 }
@@ -56,7 +57,7 @@ impl Sistema {
     fn new() -> Self {
         Sistema {
             productos: vec![],
-            categorias: vec![],
+            categorias: HashMap::new(),
             ventas: vec![],
         }
     }
@@ -69,12 +70,14 @@ impl Sistema {
         cliente: Persona,
         vendedor: Persona,
         medio_pago: MedioPago,
+        precio_final: Option<f64>,
         registros: Vec<Registro>,
     ) -> Venta {
         let venta = Venta {
             vendedor,
             cliente,
             medio_pago,
+            precio_final,
             fecha,
             registros,
         };
@@ -89,25 +92,47 @@ impl Sistema {
     // sistema tiene una lista de las categorías con el descuento a aplicar. Además se debe
     // aplicar un porcentaje de descuento general si el cliente tiene suscripción al
     // newsletter.
-    fn calcular_precio_final(&self, venta: &Venta) -> Option<f64> {
-        let venta = self.buscar_venta(venta);
-        let precio_final: Option<f64> = match venta {
-            Some(v) => {
-                let mut precio = 0.0;
-                v.registros.iter().for_each(|r| {
-                    let p_descuento = self.categorias[&r.producto.nombre_categoria];
-                    let precio_base = r.producto.precio_base;
-                    precio += precio_base + precio_base * p_descuento as f64 / 100.0;
-                });
-                Some(precio)
-            }
-            None => None,
+    fn calcular_precio_final(&mut self, venta_param: &Venta) -> Option<f64> {
+        let venta = self.buscar_venta(venta_param)?; //devuelve none si es none
+        let mut subtotal = 0.0;
+
+        for r in &venta.registros {
+            let p_descuento = self
+                .categorias
+                .get(&r.producto.nombre_categoria)
+                .cloned()
+                .unwrap_or(0);
+
+            let precio_base = r.producto.precio_base;
+            let precio_con_descuento = precio_base * (1.0 - p_descuento as f64 / 100.0);
+            subtotal += precio_con_descuento * r.cantidad as f64;
+        }
+
+        let descuento_newsletter = if venta.cliente.email_newsletter.is_some() {
+            DESCUENTO_GRAL_NEWSLETTER as f64
+        } else {
+            0.0
         };
-        precio_final
+        let precio_final = subtotal * (1.0 - descuento_newsletter / 100.0);
+        Some(precio_final)
     }
 
     fn buscar_venta(&self, venta: &Venta) -> Option<&Venta> {
         self.ventas.iter().find(|v| *v == venta)
+    }
+
+    // ➢ Para llevar un control de las ventas realizadas, se debe implementar un reporte que
+    // permita visualizar las ventas totales por categoría de producto y otro por vendedor.
+    fn reporte_ventas_categoria(&self) -> HashMap<String, f64> {
+        let mut reporte: HashMap<String, f64> = HashMap::new();
+        for v in &self.ventas {}
+        reporte
+    }
+
+    fn reporte_ventas_vendedor(&self) -> HashMap<String, f64> {
+        let mut reporte: HashMap<String, f64> = HashMap::new();
+        for v in &self.ventas {}
+        reporte
     }
 }
 
