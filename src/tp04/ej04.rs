@@ -22,7 +22,6 @@ struct Venta {
     vendedor: Persona,
     cliente: Persona,
     medio_pago: MedioPago,
-    precio_final: Option<f64>, // el precio final puede o no estar computado
     fecha: Fecha,
     registros: Vec<Registro>,
 }
@@ -53,6 +52,21 @@ enum MedioPago {
     Efectivo,
 }
 
+#[derive(Debug, Clone)]
+struct Reporte {
+    nombre: String,
+    cantidad_ventas: u32,
+}
+
+impl Reporte {
+    fn new(nombre: String, cantidad_ventas: u32) -> Self {
+        Reporte {
+            nombre,
+            cantidad_ventas,
+        }
+    }
+}
+
 impl Sistema {
     fn new() -> Self {
         Sistema {
@@ -70,14 +84,12 @@ impl Sistema {
         cliente: Persona,
         vendedor: Persona,
         medio_pago: MedioPago,
-        precio_final: Option<f64>,
         registros: Vec<Registro>,
     ) -> Venta {
         let venta = Venta {
             vendedor,
             cliente,
             medio_pago,
-            precio_final,
             fecha,
             registros,
         };
@@ -123,19 +135,210 @@ impl Sistema {
 
     // ➢ Para llevar un control de las ventas realizadas, se debe implementar un reporte que
     // permita visualizar las ventas totales por categoría de producto y otro por vendedor.
-    fn reporte_ventas_categoria(&self) -> HashMap<String, f64> {
-        let mut reporte: HashMap<String, f64> = HashMap::new();
-        for v in &self.ventas {}
-        reporte
+    fn reporte_ventas_categoria(&self, categoria: &str) -> Reporte {
+        let mut cantidad_ventas: u32 = 0;
+        for v in &self.ventas {
+            if v.registros
+                .iter()
+                .any(|r| r.producto.nombre_categoria == categoria)
+            {
+                cantidad_ventas += 1;
+            }
+        }
+
+        Reporte::new(categoria.to_string(), cantidad_ventas)
     }
 
-    fn reporte_ventas_vendedor(&self) -> HashMap<String, f64> {
-        let mut reporte: HashMap<String, f64> = HashMap::new();
-        for v in &self.ventas {}
-        reporte
+    fn reporte_ventas_vendedor(&self, nombre_vendedor: &str) -> Reporte {
+        let cantidad_ventas = self
+            .ventas
+            .iter()
+            .filter(|v| v.vendedor.nombre == nombre_vendedor)
+            .count() as u32;
+
+        Reporte::new(nombre_vendedor.to_string(), cantidad_ventas)
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    struct TestData {
+        sistema: Sistema,
+        productos: Vec<Producto>,
+        vendedor: Persona,
+        cliente: Persona,
+        fecha: Fecha,
+    }
+
+    fn setup() -> TestData {
+        let mut sistema = Sistema::new();
+
+        sistema.categorias.insert("Electrónica".to_string(), 20);
+        sistema.categorias.insert("Ropa".to_string(), 10);
+
+        let prod1 = Producto {
+            nombre: "Celular".to_string(),
+            nombre_categoria: "Electrónica".to_string(),
+            precio_base: 1000.0,
+        };
+        let prod2 = Producto {
+            nombre: "Camiseta".to_string(),
+            nombre_categoria: "Ropa".to_string(),
+            precio_base: 50.0,
+        };
+
+        let vendedor = Persona {
+            nombre: "Juan".to_string(),
+            apellido: "Pérez".to_string(),
+            direccion: "Calle 123".to_string(),
+            dni: 12345678,
+            legajo: 1,
+            antiguedad: 5,
+            salario: 2000.0,
+            email_newsletter: None,
+        };
+        let cliente = Persona {
+            nombre: "Ana".to_string(),
+            apellido: "Gómez".to_string(),
+            direccion: "Av 456".to_string(),
+            dni: 87654321,
+            legajo: 0,
+            antiguedad: 0,
+            salario: 0.0,
+            email_newsletter: Some("ana@example.com".to_string()),
+        };
+
+        sistema.crear_venta(
+            Fecha {
+                dia: 1,
+                mes: 5,
+                año: 2025,
+            },
+            cliente.clone(),
+            vendedor.clone(),
+            MedioPago::Efectivo,
+            vec![Registro {
+                producto: prod1.clone(),
+                cantidad: 2,
+            }],
+        );
+        sistema.crear_venta(
+            Fecha {
+                dia: 2,
+                mes: 5,
+                año: 2025,
+            },
+            cliente.clone(),
+            vendedor.clone(),
+            MedioPago::TarjetaCredito,
+            vec![
+                Registro {
+                    producto: prod1.clone(),
+                    cantidad: 1,
+                },
+                Registro {
+                    producto: prod2.clone(),
+                    cantidad: 3,
+                },
+            ],
+        );
+
+        TestData {
+            sistema,
+            productos: vec![prod1, prod2],
+            vendedor,
+            cliente,
+            fecha: Fecha {
+                dia: 1,
+                mes: 5,
+                año: 2025,
+            },
+        }
+    }
+
+    #[test]
+    fn test_crear_venta() {
+        let mut data = setup();
+        let registros = vec![Registro {
+            producto: data.productos[0].clone(),
+            cantidad: 1,
+        }];
+        let venta = data.sistema.crear_venta(
+            data.fecha.clone(),
+            data.cliente.clone(),
+            data.vendedor.clone(),
+            MedioPago::Transferencia,
+            registros.clone(),
+        );
+
+        assert_eq!(data.sistema.ventas.len(), 3);
+        assert_eq!(venta.cliente, data.cliente);
+        assert_eq!(venta.vendedor, data.vendedor);
+        assert_eq!(venta.medio_pago, MedioPago::Transferencia);
+        assert_eq!(venta.registros, registros);
+    }
+
+    #[test]
+    fn test_calcular_precio_final() {
+        let mut data = setup();
+        let venta = &data.sistema.ventas[0].clone(); // 2 celulares (20% descuento)
+        let precio = data.sistema.calcular_precio_final(venta).unwrap();
+        // 2 * 1000 * 0.8 * 0.9 = 1440
+        assert_eq!(precio, 1440.0);
+
+        let venta = &data.sistema.ventas[1].clone(); // 1 celular + 3 camisetas
+        let precio = data.sistema.calcular_precio_final(venta).unwrap();
+        // (1 * 1000 * 0.8) + (3 * 50 * 0.9) = 800 + 135 = 935 * 0.9 = 841.5
+        assert_eq!(precio, 841.5);
+    }
+
+    #[test]
+    fn test_calcular_precio_final_venta_inexistente() {
+        let mut data = setup();
+        let venta = Venta {
+            vendedor: data.vendedor.clone(),
+            cliente: data.cliente.clone(),
+            medio_pago: MedioPago::Efectivo,
+            fecha: Fecha {
+                dia: 3,
+                mes: 5,
+                año: 2025,
+            },
+            registros: vec![],
+        };
+        let precio = data.sistema.calcular_precio_final(&venta);
+        assert!(precio.is_none());
+    }
+
+    #[test]
+    fn test_reporte_ventas_categoria() {
+        let data = setup();
+        let reporte_electronica = data.sistema.reporte_ventas_categoria("Electrónica");
+        let reporte_ropa = data.sistema.reporte_ventas_categoria("Ropa");
+        let reporte_inexistente = data.sistema.reporte_ventas_categoria("Hogar");
+
+        assert_eq!(reporte_electronica.cantidad_ventas, 2);
+        assert_eq!(reporte_electronica.nombre, "Electrónica");
+        assert_eq!(reporte_ropa.cantidad_ventas, 1);
+        assert_eq!(reporte_ropa.nombre, "Ropa");
+        assert_eq!(reporte_inexistente.cantidad_ventas, 0);
+        assert_eq!(reporte_inexistente.nombre, "Hogar");
+    }
+
+    #[test]
+    fn test_reporte_ventas_vendedor() {
+        let data = setup();
+        let reporte_juan = data.sistema.reporte_ventas_vendedor("Juan");
+        let reporte_inexistente = data.sistema.reporte_ventas_vendedor("María");
+
+        assert_eq!(reporte_juan.cantidad_ventas, 2);
+        assert_eq!(reporte_juan.nombre, "Juan");
+        assert_eq!(reporte_inexistente.cantidad_ventas, 0);
+        assert_eq!(reporte_inexistente.nombre, "María");
+    }
+}
 /*
 Se requiere implementar un sistema de ventas de productos.
 De cada producto se conoce el nombre, una categoría y un precio base, y algunos productos pueden tener
