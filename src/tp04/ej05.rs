@@ -1,6 +1,5 @@
 #![allow(dead_code, unused_variables)]
 use crate::tp03::ej03::Fecha;
-use rand::Rng;
 use std::collections::HashMap;
 
 struct Sistema {
@@ -38,47 +37,60 @@ struct Blockchain {
 struct Transaccion {
     fecha: Fecha,
     tipo: TipoTransaccion,
-    monto: f64,
+    monto_fiat: f64,
     usuario: Usuario,
-    criptomoneda: Option<Criptomoneda>,
-    cotizacion: Option<f64>,
-    hash: Option<String>,
 }
 
 #[derive(Debug)]
 enum TipoTransaccion {
     IngresoFiat,
-    IngresoCripto,
-    RetiroFiat,
-    RetiroCripto,
-    Compra,
-    Venta,
+    CompraCripto {
+        cripto: String,
+        monto_cripto: f64,
+        cotizacion: f64,
+    },
+    VentaCripto {
+        cripto: String,
+        monto_cripto: f64,
+        cotizacion: f64,
+    },
+    RetiroCripto {
+        cripto: String,
+        blockchain: String,
+        hash: String,
+        monto: f64,
+        cotizacion: f64,
+    },
+    RecepcionCripto {
+        cripto: String,
+        blockchain: String,
+        monto: f64,
+        cotizacion: f64,
+    },
+    RetiroFiat {
+        medio: MedioRetiroFiat,
+    },
+}
+
+#[derive(Debug)]
+enum MedioRetiroFiat {
+    MercadoPago,
+    TransferenciaBancaria,
 }
 
 impl Blockchain {
     fn generar_hash(&self) -> String {
-        format!("{}{}", self.prefijo, rand::thread_rng().gen_range(0..100))
+        format!("{}{}", self.prefijo, rand::random::<u64>())
     }
 }
 
 impl Transaccion {
-    fn new(
-        fecha: Fecha,
-        tipo: TipoTransaccion,
-        monto: f64,
-        usuario: Usuario,
-        criptomoneda: Option<Criptomoneda>,
-        cotizacion: Option<f64>,
-        hash: Option<String>,
-    ) -> Self {
+    fn new(fecha: Fecha, tipo: TipoTransaccion, monto_fiat: f64, usuario: Usuario) -> Self {
         Transaccion {
             fecha,
             tipo,
-            monto,
+            monto_fiat,
             usuario,
-            criptomoneda,
-            cotizacion,
-            hash,
         }
     }
 }
@@ -135,25 +147,22 @@ impl Sistema {
     fiat de dicho usuario. Además se crea una transacción del hecho donde los datos
     que se guardan son:fecha, tipo(ingreso de dinero), monto, usuario.
     */
-    fn ingresar_dinero(&mut self, monto_fiat: f64, usuario: &Usuario) -> bool {
-        if let Some(u) = self.buscar_usuario(usuario.email.clone()) {
-            u.monto_fiat += monto_fiat;
+    fn ingresar_dinero(&mut self, monto_fiat: f64, usuario: &Usuario) -> Result<(), String> {
+        let u = self
+            .buscar_usuario(usuario.email.clone())
+            .ok_or_else(|| format!("El usuario {} no fue encontrado", usuario.email))?;
+        u.monto_fiat += monto_fiat;
 
-            let transaccion = Transaccion::new(
-                Fecha::fecha_actual(),
-                TipoTransaccion::IngresoFiat,
-                monto_fiat,
-                usuario.clone(),
-                None,
-                None,
-                None,
-            );
+        let transaccion = Transaccion::new(
+            Fecha::fecha_actual(),
+            TipoTransaccion::IngresoFiat,
+            monto_fiat,
+            usuario.clone(),
+        );
 
-            self.transacciones.push(transaccion);
+        self.transacciones.push(transaccion);
 
-            return true;
-        }
-        false
+        Ok(())
     }
 
     /*
@@ -170,44 +179,57 @@ impl Sistema {
         cantidad: f64,
         criptomoneda: &Criptomoneda,
         usuario: &Usuario,
-    ) -> bool {
-        if let Some(cotizacion) = self.cotizaciones.get(&criptomoneda.prefijo) {
-            let costo = cotizacion * cantidad;
-            if costo > monto_fiat {
-                return false;
-            }
+    ) -> Result<(), String> {
+        let cotizacion = self
+            .cotizaciones
+            .get(&criptomoneda.prefijo)
+            .ok_or_else(|| format!("No se econtró una cotizacion para {}", criptomoneda.prefijo))?;
 
-            let transaccion = Transaccion::new(
-                Fecha::fecha_actual(),
-                TipoTransaccion::Compra,
-                monto_fiat,
-                usuario.clone(),
-                Some(criptomoneda.clone()),
-                Some(*cotizacion),
-                None,
-            );
+        let costo = cotizacion * cantidad;
+        if costo > monto_fiat {
+            return Err(format!(
+                "El costo de la operación supera el monto de fiat {} < {}",
+                monto_fiat, costo,
+            ));
+        }
 
-            if let Some(usr) = self.buscar_usuario(usuario.email.clone()) {
-                if !usr.validado {
-                    return false;
-                }
+        let transaccion = Transaccion::new(
+            Fecha::fecha_actual(),
+            TipoTransaccion::CompraCripto {
+                cripto: criptomoneda.prefijo.clone(),
+                monto_cripto: cantidad,
+                cotizacion: *cotizacion,
+            },
+            monto_fiat,
+            usuario.clone(),
+        );
 
-                let cant_act = usr
-                    .balance_criptos
-                    .get(&criptomoneda.prefijo)
-                    .unwrap_or(&0.0);
-                let cant_final: f64 = cant_act + cantidad;
-                usr.balance_criptos
-                    .insert(criptomoneda.prefijo.clone(), cant_final);
-                usr.monto_fiat -= costo;
-            } else {
-                return false;
-            };
+        let usr = self
+            .buscar_usuario(usuario.email.clone())
+            .ok_or_else(|| format!("El usuario {} no fue encontrado", usuario.email))?;
 
-            self.transacciones.push(transaccion);
-            return true;
-        };
-        false
+        if !usr.validado {
+            return Err("El usuario no está validado".to_string());
+        }
+
+        if usr.monto_fiat < costo {
+            return Err(format!(
+                "El costo de la operación supera el monto de fiat del usuario {} < {}",
+                usr.monto_fiat, costo,
+            ));
+        }
+
+        let cant_act = usr
+            .balance_criptos
+            .get(&criptomoneda.prefijo)
+            .unwrap_or(&0.0);
+        let cant_final: f64 = cant_act + cantidad;
+        usr.balance_criptos
+            .insert(criptomoneda.prefijo.clone(), cant_final);
+        usr.monto_fiat -= costo;
+
+        self.transacciones.push(transaccion);
+        Ok(())
     }
 
     // ➢ Vender determinada criptomoneda: dado un monto de cripto se vende por fiat, tenga
@@ -221,49 +243,50 @@ impl Sistema {
         criptomoneda: &Criptomoneda,
         monto_cripto: f64,
         usuario: &Usuario,
-    ) -> bool {
-        if let Some(cotizacion) = self.cotizaciones.get(&criptomoneda.prefijo) {
-            let costo = monto_cripto * cotizacion;
-            if costo > usuario.monto_fiat {
-                return false;
-            }
+    ) -> Result<(), String> {
+        let cotizacion = self
+            .cotizaciones
+            .get(&criptomoneda.prefijo)
+            .ok_or_else(|| format!("No se econtró una cotizacion para {}", criptomoneda.prefijo))?;
 
-            let transaccion = Transaccion::new(
-                Fecha::fecha_actual(),
-                TipoTransaccion::Venta,
-                costo,
-                usuario.clone(),
-                Some(criptomoneda.clone()),
-                Some(*cotizacion),
-                None,
-            );
+        let costo = monto_cripto * cotizacion;
 
-            if let Some(usr) = self.buscar_usuario(usuario.email.clone()) {
-                if !usr.validado {
-                    return false;
-                }
+        let transaccion = Transaccion::new(
+            Fecha::fecha_actual(),
+            TipoTransaccion::VentaCripto {
+                cripto: criptomoneda.prefijo.clone(),
+                monto_cripto,
+                cotizacion: *cotizacion,
+            },
+            costo,
+            usuario.clone(),
+        );
 
-                let cant_act = usr
-                    .balance_criptos
-                    .get(&criptomoneda.prefijo)
-                    .unwrap_or(&0.0);
-                let cant_final: f64 = cant_act - costo;
-                if cant_final < 0.0 {
-                    return false;
-                }
-
-                usr.balance_criptos
-                    .insert(criptomoneda.prefijo.clone(), cant_final);
-                usr.monto_fiat += costo;
-            } else {
-                return false;
-            }
-
-            self.transacciones.push(transaccion);
-            true
-        } else {
-            false
+        let usr = self
+            .buscar_usuario(usuario.email.clone())
+            .ok_or_else(|| format!("El usuario {} no fue encontrado", usuario.email))?;
+        if !usr.validado {
+            return Err("El usuario no está validado".to_string());
         }
+
+        let cant_act = usr
+            .balance_criptos
+            .get(&criptomoneda.prefijo)
+            .unwrap_or(&0.0);
+        if monto_cripto > *cant_act {
+            return Err(format!(
+                "La cantidad de cripto no puede superar a la del usuario: {} < {}",
+                cant_act, monto_cripto
+            ));
+        }
+
+        let cant_final: f64 = cant_act - monto_cripto;
+        usr.balance_criptos
+            .insert(criptomoneda.prefijo.clone(), cant_final);
+        usr.monto_fiat += costo;
+
+        self.transacciones.push(transaccion);
+        Ok(())
     }
 
     //➢ Retirar criptomoneda a blockchain: dado un monto de una cripto y una blockchain se
@@ -278,44 +301,83 @@ impl Sistema {
         criptomoneda: &Criptomoneda,
         cantidad: f64,
         blockchain: &Blockchain,
-    ) -> bool {
-        if let Some(cotizacion) = self.cotizaciones.get(&criptomoneda.prefijo) {
-            let hash = blockchain.generar_hash();
-            let transaccion = Transaccion::new(
-                Fecha::fecha_actual(),
-                TipoTransaccion::RetiroCripto,
-                cantidad,
-                usuario.clone(),
-                Some(criptomoneda.clone()),
-                Some(*cotizacion),
-                Some(hash),
-            );
+    ) -> Result<(), String> {
+        let cotizacion = self
+            .cotizaciones
+            .get(&criptomoneda.prefijo)
+            .ok_or_else(|| format!("No se econtró una cotizacion para {}", criptomoneda.prefijo))?;
 
-            self.transacciones.push(transaccion);
-            if let Some(usr) = self.buscar_usuario(usuario.email.clone()) {
-                if !usr.validado {
-                    return false;
-                }
+        let hash = blockchain.generar_hash();
 
-                let cant_act = usr
-                    .balance_criptos
-                    .get(&criptomoneda.prefijo)
-                    .unwrap_or(&0.0);
-                if cantidad > *cant_act {
-                    return false;
-                }
-                let cant_final = cant_act - cantidad;
+        let transaccion = Transaccion::new(
+            Fecha::fecha_actual(),
+            TipoTransaccion::RetiroCripto {
+                cripto: criptomoneda.prefijo.clone(),
+                blockchain: blockchain.prefijo.clone(),
+                hash,
+                monto: cantidad,
+                cotizacion: *cotizacion,
+            },
+            cantidad,
+            usuario.clone(),
+        );
 
-                usr.balance_criptos
-                    .insert(criptomoneda.prefijo.clone(), cant_final);
+        let usr = self
+            .buscar_usuario(usuario.email.clone())
+            .ok_or_else(|| format!("El usuario {} no fue encontrado", usuario.email))?;
 
-                true
-            } else {
-                false
-            }
-        } else {
-            false
+        if !usr.validado {
+            return Err("El usuario no está validado".to_string());
         }
+
+        let cant_act = usr
+            .balance_criptos
+            .get(&criptomoneda.prefijo)
+            .unwrap_or(&0.0);
+        if cantidad > *cant_act {
+            return Err(format!("Balance insuficiente: {} < {}", cant_act, cantidad));
+        }
+
+        let cant_final = cant_act - cantidad;
+        usr.balance_criptos
+            .insert(criptomoneda.prefijo.clone(), cant_final);
+
+        self.transacciones.push(transaccion);
+        Ok(())
+    }
+
+    // ➢ Retirar fiat por determinado medio: dado un monto de fiat se le descuenta dicho
+    // monto del balance al usuario y se genera una transacción con la siguiente
+    // información: fecha, usuario, tipo: retiro fiat, monto y medio (puede ser MercadoPago
+    // o Transferencia Bancaria)
+    fn retirar_fiat(
+        &mut self,
+        usuario: &Usuario,
+        monto_fiat: f64,
+        medio: MedioRetiroFiat,
+    ) -> Result<(), String> {
+        let usr = self
+            .buscar_usuario(usuario.email.clone())
+            .ok_or_else(|| format!("El usuario {} no fue encontrado", usuario.email))?;
+
+        if monto_fiat > usr.monto_fiat {
+            return Err(format!(
+                "El usuario no tiene el monto requerido: {} < {}",
+                usr.monto_fiat, monto_fiat
+            ));
+        }
+
+        usr.monto_fiat -= monto_fiat;
+
+        let transaccion = Transaccion::new(
+            Fecha::fecha_actual(),
+            TipoTransaccion::RetiroFiat { medio },
+            monto_fiat,
+            usuario.clone(),
+        );
+        self.transacciones.push(transaccion);
+
+        Ok(())
     }
 }
 
@@ -327,63 +389,330 @@ mod test {
         sistema: Sistema,
         usuarios: Vec<Usuario>,
         criptomonedas: Vec<Criptomoneda>,
+        blockchains: Vec<Blockchain>,
     }
 
     fn setup() -> TestData {
         let u1 = Usuario::new(
-            "tao".to_string(),
-            "lop".to_string(),
+            "Tao".to_string(),
+            "Lop".to_string(),
             "a@a.com".to_string(),
             12345678,
             500.0,
             true,
         );
+        let u2 = Usuario::new(
+            "Ana".to_string(),
+            "Gomez".to_string(),
+            "b@b.com".to_string(),
+            87654321,
+            1000.0,
+            false, // Usuario no validado
+        );
+        let blockchain = Blockchain {
+            nombre: "Monero".to_string(),
+            prefijo: "MNR".to_string(),
+        };
         let xmr = Criptomoneda {
-            prefijo: "Monero".to_string(),
-            nombre: "XMR".to_string(),
-            blockchains_soportadas: vec![Blockchain {
-                nombre: "Monero".to_string(),
-                prefijo: "MNR".to_string(),
-            }],
+            prefijo: "XMR".to_string(),
+            nombre: "Monero".to_string(),
+            blockchains_soportadas: vec![blockchain.clone()],
         };
         let mut hm: HashMap<String, f64> = HashMap::new();
         hm.insert(xmr.prefijo.clone(), 300.0);
 
-        let s = Sistema::new(vec![u1.clone()], hm, vec![xmr.clone()]);
+        let mut s = Sistema::new(vec![u1.clone(), u2.clone()], hm, vec![xmr.clone()]);
+        s.buscar_usuario("a@a.com".to_string())
+            .unwrap()
+            .balance_criptos
+            .insert("XMR".to_string(), 2.0);
+
         TestData {
             sistema: s,
-            usuarios: vec![u1],
-            criptomonedas: vec![xmr.clone()],
+            usuarios: vec![u1, u2],
+            criptomonedas: vec![xmr],
+            blockchains: vec![blockchain],
         }
     }
 
     #[test]
-    fn test_ej05_ingresar_dinero() {
+    fn test_ingresar_dinero_exitoso() {
         let td = setup();
-        let u1 = td.usuarios[0].clone();
         let mut s = td.sistema;
-        assert!(s.ingresar_dinero(100.0, &u1));
+        let u1 = td.usuarios[0].clone();
+
+        assert!(s.ingresar_dinero(100.0, &u1).is_ok());
         assert_eq!(
             s.buscar_usuario("a@a.com".to_string()).unwrap().monto_fiat,
             600.0
         );
-        assert!(s.ingresar_dinero(200.0, &u1));
+        assert_eq!(s.transacciones.len(), 1);
+        assert!(matches!(
+            s.transacciones[0].tipo,
+            TipoTransaccion::IngresoFiat
+        ));
+        assert_eq!(s.transacciones[0].monto_fiat, 100.0);
+    }
+
+    #[test]
+    fn test_ingresar_dinero_usuario_no_encontrado() {
+        let mut s = setup().sistema;
+        let user = Usuario::new(
+            "No".to_string(),
+            "Exist".to_string(),
+            "c@c.com".to_string(),
+            99999999,
+            0.0,
+            true,
+        );
         assert_eq!(
-            s.buscar_usuario("a@a.com".to_string()).unwrap().monto_fiat,
-            800.0
+            s.ingresar_dinero(100.0, &user).unwrap_err(),
+            "El usuario c@c.com no fue encontrado"
         );
     }
 
     #[test]
-    fn test_ej05_comprar_criptomoneda() {
+    fn test_comprar_criptomoneda_exitoso() {
         let td = setup();
         let mut s = td.sistema;
-        let u = td.usuarios[0].clone();
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
 
-        assert!(s.comprar_criptomoneda(400.0, 1.0, &td.criptomonedas[0].clone(), &u));
-        let u_modificado = s.usuarios[0].clone();
-        assert_eq!(u_modificado.monto_fiat, 200.0);
-        assert!(!s.transacciones.is_empty());
+        assert!(s.comprar_criptomoneda(400.0, 1.0, &xmr, &u1).is_ok());
+        let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
+        assert_eq!(u_mod.monto_fiat, 200.0); // 500 - (1 * 300)
+        assert_eq!(u_mod.balance_criptos.get("XMR").unwrap(), &3.0); // 2 + 1
+        assert_eq!(s.transacciones.len(), 1);
+        assert!(matches!(
+            s.transacciones[0].tipo,
+            TipoTransaccion::CompraCripto { monto_cripto, .. } if monto_cripto == 1.0
+        ));
+    }
+
+    #[test]
+    fn test_comprar_criptomoneda_fiat_insuficiente() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+
+        assert_eq!(
+            s.comprar_criptomoneda(200.0, 1.0, &xmr, &u1).unwrap_err(),
+            "El costo de la operación supera el monto de fiat 200 < 300"
+        );
+    }
+
+    #[test]
+    fn test_comprar_criptomoneda_no_validado() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u2 = td.usuarios[1].clone(); // Unvalidated user
+        let xmr = td.criptomonedas[0].clone();
+
+        assert_eq!(
+            s.comprar_criptomoneda(400.0, 1.0, &xmr, &u2).unwrap_err(),
+            "El usuario no está validado"
+        );
+    }
+
+    #[test]
+    fn test_comprar_criptomoneda_no_cotizacion() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = Criptomoneda {
+            prefijo: "BTC".to_string(),
+            nombre: "Bitcoin".to_string(),
+            blockchains_soportadas: vec![],
+        };
+
+        assert_eq!(
+            s.comprar_criptomoneda(400.0, 1.0, &xmr, &u1).unwrap_err(),
+            "No se econtró una cotizacion para BTC"
+        );
+    }
+
+    #[test]
+    fn test_vender_criptomoneda_exitoso() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+
+        assert!(s.vender_criptomoneda(&xmr, 1.0, &u1).is_ok());
+        let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
+        assert_eq!(u_mod.monto_fiat, 800.0); // 500 + (1 * 300)
+        assert_eq!(u_mod.balance_criptos.get("XMR").unwrap(), &1.0); // 2 - 1
+        assert_eq!(s.transacciones.len(), 1);
+        assert!(matches!(
+            s.transacciones[0].tipo,
+            TipoTransaccion::VentaCripto { monto_cripto, .. } if monto_cripto == 1.0
+        ));
+    }
+
+    #[test]
+    fn test_vender_criptomoneda_cripto_insuficiente() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+
+        assert_eq!(
+            s.vender_criptomoneda(&xmr, 3.0, &u1).unwrap_err(),
+            "La cantidad de cripto no puede superar a la del usuario: 2 < 3",
+        );
+    }
+
+    #[test]
+    fn test_vender_criptomoneda_no_validado() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u2 = td.usuarios[1].clone(); // Usuario no validado
+        let xmr = td.criptomonedas[0].clone();
+
+        assert_eq!(
+            s.vender_criptomoneda(&xmr, 1.0, &u2).unwrap_err(),
+            "El usuario no está validado"
+        );
+    }
+
+    #[test]
+    fn test_vender_criptomoneda_no_cotizacion() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = Criptomoneda {
+            prefijo: "BTC".to_string(),
+            nombre: "Bitcoin".to_string(),
+            blockchains_soportadas: vec![],
+        };
+
+        assert_eq!(
+            s.vender_criptomoneda(&xmr, 1.0, &u1).unwrap_err(),
+            "No se econtró una cotizacion para BTC"
+        );
+    }
+
+    #[test]
+    fn test_retirar_criptomoneda_exitoso() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+        let blockchain = td.blockchains[0].clone();
+
+        assert!(s.retirar_criptomoneda(&u1, &xmr, 1.0, &blockchain).is_ok());
+        let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
+        assert_eq!(u_mod.balance_criptos.get("XMR").unwrap(), &1.0); // 2 - 1
+        assert_eq!(u_mod.monto_fiat, 500.0); // Sin cambios
+        assert_eq!(s.transacciones.len(), 1);
+        assert!(matches!(
+            s.transacciones[0].tipo,
+            TipoTransaccion::RetiroCripto { monto, .. } if monto == 1.0
+        ));
+    }
+
+    #[test]
+    fn test_retirar_criptomoneda_cripto_insuficiente() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+        let blockchain = td.blockchains[0].clone();
+
+        assert_eq!(
+            s.retirar_criptomoneda(&u1, &xmr, 3.0, &blockchain)
+                .unwrap_err(),
+            "Balance insuficiente: 2 < 3"
+        );
+    }
+
+    #[test]
+    fn test_retirar_criptomoneda_no_validado() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u2 = td.usuarios[1].clone(); // Usuario no validado
+        let xmr = td.criptomonedas[0].clone();
+        let blockchain = td.blockchains[0].clone();
+
+        assert_eq!(
+            s.retirar_criptomoneda(&u2, &xmr, 1.0, &blockchain)
+                .unwrap_err(),
+            "El usuario no está validado"
+        );
+    }
+
+    #[test]
+    fn test_retirar_criptomoneda_no_cotizacion() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = Criptomoneda {
+            prefijo: "BTC".to_string(),
+            nombre: "Bitcoin".to_string(),
+            blockchains_soportadas: vec![td.blockchains[0].clone()],
+        };
+        let blockchain = td.blockchains[0].clone();
+
+        assert_eq!(
+            s.retirar_criptomoneda(&u1, &xmr, 1.0, &blockchain)
+                .unwrap_err(),
+            "No se econtró una cotizacion para BTC"
+        );
+    }
+
+    #[test]
+    fn test_retirar_fiat_exitoso() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+
+        assert!(
+            s.retirar_fiat(&u1, 200.0, MedioRetiroFiat::MercadoPago)
+                .is_ok()
+        );
+        let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
+        assert_eq!(u_mod.monto_fiat, 300.0); // 500 - 200
+        assert_eq!(s.transacciones.len(), 1);
+        assert!(matches!(
+            s.transacciones[0].tipo,
+            TipoTransaccion::RetiroFiat {
+                medio: MedioRetiroFiat::MercadoPago
+            }
+        ));
+        assert_eq!(s.transacciones[0].monto_fiat, 200.0);
+    }
+
+    #[test]
+    fn test_retirar_fiat_fiat_insuficiente() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+
+        assert_eq!(
+            s.retirar_fiat(&u1, 600.0, MedioRetiroFiat::MercadoPago)
+                .unwrap_err(),
+            "El usuario no tiene el monto requerido: 500 < 600"
+        );
+    }
+
+    #[test]
+    fn test_retirar_fiat_usuario_inexistente() {
+        let mut s = setup().sistema;
+        let user = Usuario::new(
+            "No".to_string(),
+            "Exist".to_string(),
+            "c@c.com".to_string(),
+            99999999,
+            0.0,
+            true,
+        );
+
+        assert_eq!(
+            s.retirar_fiat(&user, 100.0, MedioRetiroFiat::MercadoPago)
+                .unwrap_err(),
+            "El usuario c@c.com no fue encontrado"
+        );
     }
 }
 
