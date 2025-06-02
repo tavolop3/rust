@@ -1,5 +1,6 @@
 #![allow(dead_code, unused_variables)]
 use crate::tp03::ej03::Fecha;
+use rand::Rng;
 use std::collections::HashMap;
 
 struct Sistema {
@@ -41,6 +42,7 @@ struct Transaccion {
     usuario: Usuario,
     criptomoneda: Option<Criptomoneda>,
     cotizacion: Option<f64>,
+    hash: Option<String>,
 }
 
 #[derive(Debug)]
@@ -53,6 +55,12 @@ enum TipoTransaccion {
     Venta,
 }
 
+impl Blockchain {
+    fn generar_hash(&self) -> String {
+        format!("{}{}", self.prefijo, rand::thread_rng().gen_range(0..100))
+    }
+}
+
 impl Transaccion {
     fn new(
         fecha: Fecha,
@@ -61,6 +69,7 @@ impl Transaccion {
         usuario: Usuario,
         criptomoneda: Option<Criptomoneda>,
         cotizacion: Option<f64>,
+        hash: Option<String>,
     ) -> Self {
         Transaccion {
             fecha,
@@ -69,6 +78,7 @@ impl Transaccion {
             usuario,
             criptomoneda,
             cotizacion,
+            hash,
         }
     }
 }
@@ -136,6 +146,7 @@ impl Sistema {
                 usuario.clone(),
                 None,
                 None,
+                None,
             );
 
             self.transacciones.push(transaccion);
@@ -173,11 +184,12 @@ impl Sistema {
                 usuario.clone(),
                 Some(criptomoneda.clone()),
                 Some(*cotizacion),
+                None,
             );
 
             if let Some(usr) = self.buscar_usuario(usuario.email.clone()) {
                 if !usr.validado {
-                    return usr.validado;
+                    return false;
                 }
 
                 let cant_act = usr
@@ -186,7 +198,7 @@ impl Sistema {
                     .unwrap_or(&0.0);
                 let cant_final: f64 = cant_act + cantidad;
                 usr.balance_criptos
-                    .insert(criptomoneda.nombre.clone(), cant_final);
+                    .insert(criptomoneda.prefijo.clone(), cant_final);
                 usr.monto_fiat -= costo;
             } else {
                 return false;
@@ -223,11 +235,12 @@ impl Sistema {
                 usuario.clone(),
                 Some(criptomoneda.clone()),
                 Some(*cotizacion),
+                None,
             );
 
             if let Some(usr) = self.buscar_usuario(usuario.email.clone()) {
                 if !usr.validado {
-                    return usr.validado;
+                    return false;
                 }
 
                 let cant_act = usr
@@ -240,7 +253,7 @@ impl Sistema {
                 }
 
                 usr.balance_criptos
-                    .insert(criptomoneda.nombre.clone(), cant_final);
+                    .insert(criptomoneda.prefijo.clone(), cant_final);
                 usr.monto_fiat += costo;
             } else {
                 return false;
@@ -259,7 +272,51 @@ impl Sistema {
     // de la blockchain + un número random). Luego se genera una transacción con los
     // siguientes datos: fecha, usuario, tipo: retiro cripto, blockchain, hash, cripto, monto,
     // cotización.
-    fn retirar_criptomoneda() {}
+    fn retirar_criptomoneda(
+        &mut self,
+        usuario: &Usuario,
+        criptomoneda: &Criptomoneda,
+        cantidad: f64,
+        blockchain: &Blockchain,
+    ) -> bool {
+        if let Some(cotizacion) = self.cotizaciones.get(&criptomoneda.prefijo) {
+            let hash = blockchain.generar_hash();
+            let transaccion = Transaccion::new(
+                Fecha::fecha_actual(),
+                TipoTransaccion::RetiroCripto,
+                cantidad,
+                usuario.clone(),
+                Some(criptomoneda.clone()),
+                Some(*cotizacion),
+                Some(hash),
+            );
+
+            self.transacciones.push(transaccion);
+            if let Some(usr) = self.buscar_usuario(usuario.email.clone()) {
+                if !usr.validado {
+                    return false;
+                }
+
+                let cant_act = usr
+                    .balance_criptos
+                    .get(&criptomoneda.prefijo)
+                    .unwrap_or(&0.0);
+                if cantidad > *cant_act {
+                    return false;
+                }
+                let cant_final = cant_act - cantidad;
+
+                usr.balance_criptos
+                    .insert(criptomoneda.prefijo.clone(), cant_final);
+
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
 }
 
 #[cfg(test)]
