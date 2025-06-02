@@ -379,6 +379,82 @@ impl Sistema {
 
         Ok(())
     }
+
+    // ➢ Saber cual es la criptomoneda que más cantidad de ventas tiene
+    fn cripto_mas_cantidad_ventas(&self) -> Option<String> {
+        let mut cantidades: HashMap<String, u64> = HashMap::new();
+
+        for transaccion in &self.transacciones {
+            if let TipoTransaccion::VentaCripto { cripto, .. } = &transaccion.tipo {
+                *cantidades.entry(cripto.clone()).or_insert(0) += 1;
+            }
+        }
+
+        cantidades
+            .into_iter()
+            .max_by_key(|&(_, cant)| cant)
+            .map(|(cripto, _)| cripto)
+    }
+
+    // ➢ Saber cual es la criptomoneda que más cantidad de compras tiene
+    fn cripto_mas_cantidad_compras(&self) -> Option<String> {
+        let mut cantidades: HashMap<String, u64> = HashMap::new();
+
+        for transaccion in &self.transacciones {
+            if let TipoTransaccion::CompraCripto { cripto, .. } = &transaccion.tipo {
+                *cantidades.entry(cripto.clone()).or_insert(0) += 1;
+            }
+        }
+
+        cantidades
+            .into_iter()
+            .max_by_key(|&(_, cant)| cant)
+            .map(|(cripto, _)| cripto)
+    }
+
+    // ➢ Saber cual es la criptomoneda que más volumen de ventas tiene
+    fn cripto_mas_volumen_ventas(&self) -> Option<String> {
+        let mut volumenes: HashMap<String, f64> = HashMap::new();
+
+        for transaccion in &self.transacciones {
+            if let TipoTransaccion::VentaCripto {
+                cripto,
+                monto_cripto,
+                ..
+            } = &transaccion.tipo
+            {
+                *volumenes.entry(cripto.clone()).or_insert(0.0) += monto_cripto;
+            }
+        }
+
+        // uso max_by con una comparacion parcial pq no hay eq para floats
+        volumenes
+            .into_iter()
+            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(cripto, _)| cripto)
+    }
+
+    // ➢ Saber cual es la criptomoneda que más volumen de compras tiene
+    fn cripto_mas_volumen_compras(&self) -> Option<String> {
+        let mut volumenes: HashMap<String, f64> = HashMap::new();
+
+        for transaccion in &self.transacciones {
+            if let TipoTransaccion::CompraCripto {
+                cripto,
+                monto_cripto,
+                ..
+            } = &transaccion.tipo
+            {
+                *volumenes.entry(cripto.clone()).or_insert(0.0) += monto_cripto;
+            }
+        }
+
+        // uso max_by con una comparacion parcial pq no hay eq para floats
+        volumenes
+            .into_iter()
+            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(cripto, _)| cripto)
+    }
 }
 
 #[cfg(test)]
@@ -506,7 +582,7 @@ mod test {
     fn test_comprar_criptomoneda_no_validado() {
         let td = setup();
         let mut s = td.sistema;
-        let u2 = td.usuarios[1].clone(); // Unvalidated user
+        let u2 = td.usuarios[1].clone(); // Usuario no validado
         let xmr = td.criptomonedas[0].clone();
 
         assert_eq!(
@@ -559,7 +635,7 @@ mod test {
 
         assert_eq!(
             s.vender_criptomoneda(&xmr, 3.0, &u1).unwrap_err(),
-            "La cantidad de cripto no puede superar a la del usuario: 2 < 3",
+            "La cantidad de cripto no puede superar a la del usuario: 2 < 3"
         );
     }
 
@@ -713,6 +789,76 @@ mod test {
                 .unwrap_err(),
             "El usuario c@c.com no fue encontrado"
         );
+    }
+
+    #[test]
+    fn test_criptomoneda_mas_vendida_exitoso() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+
+        s.vender_criptomoneda(&xmr, 0.5, &u1).unwrap(); // Sale 1
+        s.vender_criptomoneda(&xmr, 0.5, &u1).unwrap(); // Sale 2
+
+        let btc = Criptomoneda {
+            prefijo: "BTC".to_string(),
+            nombre: "Bitcoin".to_string(),
+            blockchains_soportadas: vec![Blockchain {
+                nombre: "Bitcoin".to_string(),
+                prefijo: "BTC".to_string(),
+            }],
+        };
+        s.cotizaciones.insert("BTC".to_string(), 50000.0);
+        s.agregar_criptomoneda(&btc);
+        s.buscar_usuario("a@a.com".to_string())
+            .unwrap()
+            .balance_criptos
+            .insert("BTC".to_string(), 1.0);
+        s.vender_criptomoneda(&btc, 0.5, &u1).unwrap();
+
+        assert_eq!(s.cripto_mas_cantidad_ventas(), Some("XMR".to_string())); // XMR: 2 sales, BTC: 1
+    }
+
+    #[test]
+    fn test_criptomoneda_mas_vendida_no_ventas() {
+        let s = setup().sistema;
+        assert_eq!(s.cripto_mas_cantidad_ventas(), None); // No sales transactions
+    }
+
+    #[test]
+    fn test_criptomoneda_mayor_volumen_ventas_exitoso() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+
+        s.vender_criptomoneda(&xmr, 1.0, &u1).unwrap(); // 1.0 XMR
+        s.vender_criptomoneda(&xmr, 0.5, &u1).unwrap(); // 0.5 XMR, total 1.5 XMR
+
+        let btc = Criptomoneda {
+            prefijo: "BTC".to_string(),
+            nombre: "Bitcoin".to_string(),
+            blockchains_soportadas: vec![Blockchain {
+                nombre: "Bitcoin".to_string(),
+                prefijo: "BTC".to_string(),
+            }],
+        };
+        s.cotizaciones.insert("BTC".to_string(), 50000.0);
+        s.agregar_criptomoneda(&btc);
+        s.buscar_usuario("a@a.com".to_string())
+            .unwrap()
+            .balance_criptos
+            .insert("BTC".to_string(), 1.0);
+        s.vender_criptomoneda(&btc, 1.0, &u1).unwrap(); // 1.0 BTC
+
+        assert_eq!(s.cripto_mas_volumen_ventas(), Some("XMR".to_string())); // XMR: 1.5, BTC: 1.0
+    }
+
+    #[test]
+    fn test_criptomoneda_mayor_volumen_ventas_no_ventas() {
+        let s = setup().sistema;
+        assert_eq!(s.cripto_mas_volumen_ventas(), None); // No sales transactions
     }
 }
 
