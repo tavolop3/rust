@@ -1,6 +1,7 @@
 #![allow(dead_code, unused_variables)]
 
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::fs::File;
 use std::io::Write;
 
@@ -30,6 +31,23 @@ pub enum Color {
     Negro,
 }
 
+#[derive(Debug, PartialEq)]
+pub struct CapacidadError(u16);
+impl CapacidadError {
+    fn new(capacidad: u16) -> Self {
+        CapacidadError(capacidad)
+    }
+}
+impl fmt::Display for CapacidadError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Agregar este auto hace que se supere la capacidad maxima {}",
+            self.0
+        )
+    }
+}
+
 impl ConcesionarioAuto {
     pub fn new(nombre: String, direccion: String, capacidad: u16) -> Self {
         let autos: Vec<Auto> = vec![];
@@ -42,12 +60,9 @@ impl ConcesionarioAuto {
     }
 
     // 1a- Al agregar un auto si supera el límite de la concesionaria debe arrojar un error propio con un mensaje de contexto.
-    pub fn agregar_auto(&mut self, auto: &Auto) -> Result<(), String> {
+    pub fn agregar_auto(&mut self, auto: &Auto) -> Result<(), CapacidadError> {
         if self.capacidad == self.autos.len() as u16 {
-            return Err(format!(
-                "No se pudo agregar el auto, excede la capacidad: {}",
-                self.capacidad,
-            ));
+            return Err(CapacidadError(self.capacidad));
         }
 
         self.autos.push(auto.clone());
@@ -177,8 +192,8 @@ mod tests {
             "Debería fallar al agregar un auto cuando está llena"
         );
         assert_eq!(
-            result.unwrap_err(),
-            "No se pudo agregar el auto, excede la capacidad: 1",
+            result.unwrap_err().to_string(),
+            "Agregar este auto hace que se supere la capacidad maxima 1",
             "El mensaje de error debería ser correcto"
         );
         assert_eq!(concesionario.autos.len(), 1, "La lista no debería crecer");
