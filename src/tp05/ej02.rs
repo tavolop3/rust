@@ -1,13 +1,17 @@
 #![allow(dead_code, unused_variables)]
 
-#[derive(Clone, Debug, PartialEq)]
+use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::Write;
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Cancion {
     titulo: String,
     artista: String,
     genero: Genero,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Genero {
     Rock,
     Pop,
@@ -51,8 +55,15 @@ impl Playlist {
         }
     }
 
+    pub fn persistir_canciones(&self) {
+        let mut f = File::create("src/tp05/canciones.json").unwrap();
+        let canciones_serializado = serde_json::to_string_pretty(&self.canciones).unwrap();
+        f.write_all(canciones_serializado.as_bytes()).unwrap();
+    }
+
     pub fn agregar_cancion(&mut self, c: &Cancion) {
         self.canciones.push(c.clone());
+        self.persistir_canciones();
     }
 
     pub fn eliminar_cancion(&mut self, c: &Cancion) {
@@ -62,6 +73,7 @@ impl Playlist {
                 return;
             }
         }
+        self.persistir_canciones();
     }
 
     pub fn mover_cancion(&mut self, c: &Cancion, pos: usize) {
@@ -119,10 +131,12 @@ impl Playlist {
 
     pub fn cambiar_titulo(&mut self, titulo: String) {
         self.nombre = titulo;
+        self.persistir_canciones();
     }
 
     pub fn del_all_canciones(&mut self) {
         self.canciones.clear();
+        self.persistir_canciones();
     }
 
     pub fn get_nombre(&self) -> &String {
@@ -405,3 +419,9 @@ mod tests {
         assert_eq!(playlist.get_len_canciones(), 0);
     }
 }
+
+/* Enunciado:
+b- Una vez obtenido dicho coverage, las canciones de la playlist deben ser
+guardadas en un archivo en formato JSON, por lo tanto las operaciones que agreguen,
+quiten o modifiquen la playlist deben estar respaldadas sobre dicho archivo.
+ */
