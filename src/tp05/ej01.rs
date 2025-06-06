@@ -33,11 +33,7 @@ pub enum Color {
 
 #[derive(Debug, PartialEq)]
 pub struct CapacidadError(u16);
-impl CapacidadError {
-    fn new(capacidad: u16) -> Self {
-        CapacidadError(capacidad)
-    }
-}
+
 impl fmt::Display for CapacidadError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
