@@ -1,0 +1,22 @@
+[
+  {
+    "libro": {
+      "isbn": "12345",
+      "titulo": "Un libro",
+      "autor": "Un autor1",
+      "cant_paginas": 400,
+      "genero": "Novela"
+    },
+    "cant_disponibles": 5
+  },
+  {
+    "libro": {
+      "isbn": "67890",
+      "titulo": "La biblia de C",
+      "autor": "Brian Cranston",
+      "cant_paginas": 120,
+      "genero": "Tecnico"
+    },
+    "cant_disponibles": 4
+  }
+]

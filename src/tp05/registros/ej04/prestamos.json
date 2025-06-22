@@ -1,0 +1,107 @@
+[
+  {
+    "libro": {
+      "isbn": "12345",
+      "titulo": "Un libro",
+      "autor": "Un autor1",
+      "cant_paginas": 400,
+      "genero": "Novela"
+    },
+    "cliente": {
+      "nombre": "Juan Perez",
+      "telefono": "123456789",
+      "email": "juan@email.com"
+    },
+    "fecha_vencimiento": {
+      "año": 2025,
+      "dia": 29,
+      "mes": 6
+    },
+    "fecha_devolucion": null,
+    "estado": "EnPrestamo"
+  },
+  {
+    "libro": {
+      "isbn": "12345",
+      "titulo": "Un libro",
+      "autor": "Un autor1",
+      "cant_paginas": 400,
+      "genero": "Novela"
+    },
+    "cliente": {
+      "nombre": "Juan Perez",
+      "telefono": "123456789",
+      "email": "juan@email.com"
+    },
+    "fecha_vencimiento": {
+      "año": 2025,
+      "dia": 29,
+      "mes": 6
+    },
+    "fecha_devolucion": null,
+    "estado": "EnPrestamo"
+  },
+  {
+    "libro": {
+      "isbn": "12345",
+      "titulo": "Un libro",
+      "autor": "Un autor1",
+      "cant_paginas": 400,
+      "genero": "Novela"
+    },
+    "cliente": {
+      "nombre": "Juan Perez",
+      "telefono": "123456789",
+      "email": "juan@email.com"
+    },
+    "fecha_vencimiento": {
+      "año": 2025,
+      "dia": 29,
+      "mes": 6
+    },
+    "fecha_devolucion": null,
+    "estado": "EnPrestamo"
+  },
+  {
+    "libro": {
+      "isbn": "12345",
+      "titulo": "Un libro",
+      "autor": "Un autor1",
+      "cant_paginas": 400,
+      "genero": "Novela"
+    },
+    "cliente": {
+      "nombre": "Juan Perez",
+      "telefono": "123456789",
+      "email": "juan@email.com"
+    },
+    "fecha_vencimiento": {
+      "año": 2025,
+      "dia": 29,
+      "mes": 6
+    },
+    "fecha_devolucion": null,
+    "estado": "EnPrestamo"
+  },
+  {
+    "libro": {
+      "isbn": "12345",
+      "titulo": "Un libro",
+      "autor": "Un autor1",
+      "cant_paginas": 400,
+      "genero": "Novela"
+    },
+    "cliente": {
+      "nombre": "Juan Perez",
+      "telefono": "123456789",
+      "email": "juan@email.com"
+    },
+    "fecha_vencimiento": {
+      "año": 2025,
+      "dia": 29,
+      "mes": 6
+    },
+    "fecha_devolucion": null,
+    "estado": "EnPrestamo"
+  }
+]

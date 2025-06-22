@@ -1,8 +1,9 @@
 #![allow(dead_code, unused_variables)]
 
 use chrono::{Datelike, Duration, Local, NaiveDate};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Fecha {
     pub año: i32,
     pub dia: u32,

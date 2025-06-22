@@ -56,7 +56,7 @@ impl Playlist {
     }
 
     pub fn persistir_canciones(&self) {
-        let mut f = File::create("src/tp05/canciones.json").unwrap();
+        let mut f = File::create("src/tp05/registros/ej02/canciones.json").unwrap();
         let canciones_serializado = serde_json::to_string_pretty(&self.canciones).unwrap();
         f.write_all(canciones_serializado.as_bytes()).unwrap();
     }

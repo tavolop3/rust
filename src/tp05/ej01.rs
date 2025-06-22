@@ -73,7 +73,7 @@ impl ConcesionarioAuto {
     }
 
     fn persistir_autos(&self) {
-        let mut f = File::create("src/tp05/autos.json").unwrap();
+        let mut f = File::create("src/tp05/registros/ej01/autos.json").unwrap();
         let auto_serializado = serde_json::to_string_pretty(&self.autos).unwrap();
         f.write_all(auto_serializado.as_bytes()).unwrap();
     }
