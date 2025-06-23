@@ -1,10 +1,9 @@
 [
   {
-    "marca": "Honda",
-    "modelo": "Civic",
-    "año": 2021,
-    "precio_bruto": 22000.0,
-    "color": "Rojo"
+    "marca": "Toyota",
+    "modelo": "Corolla",
+    "año": 2020,
+    "precio_bruto": 20000.0,
+    "color": "Azul"
   }
-]}
 ]

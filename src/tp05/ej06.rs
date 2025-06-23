@@ -1,7 +1,12 @@
 #![allow(dead_code, unused_variables)]
 use crate::tp03::ej03::Fecha;
+use serde::{Deserialize, Serialize};
+use serde_json;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
 
+#[derive(Serialize, Deserialize)]
 struct Sistema {
     usuarios: Vec<Usuario>,
     cotizaciones: HashMap<String, f64>,
@@ -9,7 +14,7 @@ struct Sistema {
     transacciones: Vec<Transaccion>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 struct Usuario {
     nombre: String,
     apellido: String,
@@ -20,20 +25,20 @@ struct Usuario {
     balance_criptos: HashMap<String, f64>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 struct Criptomoneda {
     nombre: String,
     prefijo: String,
     blockchains_soportadas: Vec<Blockchain>,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 struct Blockchain {
     nombre: String,
     prefijo: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Transaccion {
     fecha: Fecha,
     tipo: TipoTransaccion,
@@ -41,7 +46,7 @@ struct Transaccion {
     usuario: Usuario,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 enum TipoTransaccion {
     IngresoFiat,
     CompraCripto {
@@ -72,7 +77,7 @@ enum TipoTransaccion {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 enum MedioRetiroFiat {
     MercadoPago,
     TransferenciaBancaria,
@@ -132,10 +137,12 @@ impl Sistema {
 
     fn agregar_criptomoneda(&mut self, criptomoneda: &Criptomoneda) {
         self.criptomonedas.push(criptomoneda.clone());
+        self.persistir();
     }
 
     fn agregar_usuario(&mut self, usuario: &Usuario) {
         self.usuarios.push(usuario.clone());
+        self.persistir();
     }
 
     fn buscar_usuario(&mut self, email: String) -> Option<&mut Usuario> {
@@ -156,6 +163,7 @@ impl Sistema {
         );
 
         self.transacciones.push(transaccion);
+        self.persistir();
 
         Ok(())
     }
@@ -216,6 +224,7 @@ impl Sistema {
         usr.monto_fiat -= costo;
 
         self.transacciones.push(transaccion);
+        self.persistir();
         Ok(())
     }
 
@@ -267,6 +276,7 @@ impl Sistema {
         usr.monto_fiat += costo;
 
         self.transacciones.push(transaccion);
+        self.persistir();
         Ok(())
     }
 
@@ -318,6 +328,7 @@ impl Sistema {
             .insert(criptomoneda.prefijo.clone(), cant_final);
 
         self.transacciones.push(transaccion);
+        self.persistir();
         Ok(())
     }
 
@@ -359,6 +370,7 @@ impl Sistema {
             .insert(criptomoneda.prefijo.clone(), current_balance + monto);
 
         self.transacciones.push(transaccion);
+        self.persistir();
         Ok(())
     }
 
@@ -388,6 +400,7 @@ impl Sistema {
             usuario.clone(),
         );
         self.transacciones.push(transaccion);
+        self.persistir();
 
         Ok(())
     }
@@ -462,13 +475,11 @@ impl Sistema {
             .map(|(cripto, _)| cripto)
     }
 
-    // pub fn persistir(&self) {
-    //     let path = "src/tp05/registros/ej05/streaming_rust.json";
-    //     let dir = Path::new(path).parent().unwrap();
-    //
-    //     let serialized = serde_json::to_string_pretty(&self).unwrap();
-    //     write(path, serialized).unwrap();
-    // }
+    pub fn persistir(&self) {
+        let mut f = File::create("src/tp05/registros/ej06/blockchain-rust.json").unwrap();
+        let registros_serializado = serde_json::to_string_pretty(&self).unwrap();
+        f.write_all(registros_serializado.as_bytes()).unwrap();
+    }
 }
 
 #[cfg(test)]

@@ -17,20 +17,79 @@
       "dia": 30,
       "mes": 6
     },
-    "fecha_devolucion": {
-      "año": 2025,
-      "dia": 23,
-      "mes": 6
-    },
-    "estado": "Devuelto"
+    "fecha_devolucion": null,
+    "estado": "EnPrestamo"
   },
   {
     "libro": {
-      "isbn": "67890",
-      "titulo": "La biblia de C",
-      "autor": "Brian Cranston",
-      "cant_paginas": 120,
-      "genero": "Tecnico"
+      "isbn": "12345",
+      "titulo": "Un libro",
+      "autor": "Un autor1",
+      "cant_paginas": 400,
+      "genero": "Novela"
+    },
+    "cliente": {
+      "nombre": "Juan Perez",
+      "telefono": "123456789",
+      "email": "juan@email.com"
+    },
+    "fecha_vencimiento": {
+      "año": 2025,
+      "dia": 30,
+      "mes": 6
+    },
+    "fecha_devolucion": null,
+    "estado": "EnPrestamo"
+  },
+  {
+    "libro": {
+      "isbn": "12345",
+      "titulo": "Un libro",
+      "autor": "Un autor1",
+      "cant_paginas": 400,
+      "genero": "Novela"
+    },
+    "cliente": {
+      "nombre": "Juan Perez",
+      "telefono": "123456789",
+      "email": "juan@email.com"
+    },
+    "fecha_vencimiento": {
+      "año": 2025,
+      "dia": 30,
+      "mes": 6
+    },
+    "fecha_devolucion": null,
+    "estado": "EnPrestamo"
+  },
+  {
+    "libro": {
+      "isbn": "12345",
+      "titulo": "Un libro",
+      "autor": "Un autor1",
+      "cant_paginas": 400,
+      "genero": "Novela"
+    },
+    "cliente": {
+      "nombre": "Juan Perez",
+      "telefono": "123456789",
+      "email": "juan@email.com"
+    },
+    "fecha_vencimiento": {
+      "año": 2025,
+      "dia": 30,
+      "mes": 6
+    },
+    "fecha_devolucion": null,
+    "estado": "EnPrestamo"
+  },
+  {
+    "libro": {
+      "isbn": "12345",
+      "titulo": "Un libro",
+      "autor": "Un autor1",
+      "cant_paginas": 400,
+      "genero": "Novela"
     },
     "cliente": {
       "nombre": "Juan Perez",

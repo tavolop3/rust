@@ -1,9 +1,7 @@
 #![allow(dead_code, unused_variables)]
 use std::collections::HashMap;
-use std::fs::create_dir_all;
-use std::fs::{File, remove_file};
+use std::fs::File;
 use std::io::Write;
-use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -248,12 +246,6 @@ mod test {
     }
 
     fn setup() -> TestData {
-        let path_str = "src/tp05/registros/ej05/streaming_rust.json";
-        let dir_path = Path::new(path_str).parent().unwrap();
-        let file_path = Path::new(path_str);
-        create_dir_all(dir_path).expect("Failed to create test directory structure");
-        let _ = remove_file(file_path);
-
         let mut sr = StreamingRust::new();
         let mut u1 = Usuario::new("tao".to_string(), "tao@example.com".to_string());
         let mut u2 = Usuario::new("clasico".to_string(), "clasico@example.com".to_string());
