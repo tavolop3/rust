@@ -142,11 +142,6 @@ impl Sistema {
         self.usuarios.iter_mut().find(|u| u.email == email)
     }
 
-    /*
-    ➢ Ingresar dinero: se recibe un monto en fiat de un usuario y se acredita al balance de
-    fiat de dicho usuario. Además se crea una transacción del hecho donde los datos
-    que se guardan son:fecha, tipo(ingreso de dinero), monto, usuario.
-    */
     fn ingresar_dinero(&mut self, monto_fiat: f64, usuario: &Usuario) -> Result<(), String> {
         let u = self
             .buscar_usuario(usuario.email.clone())
@@ -165,14 +160,6 @@ impl Sistema {
         Ok(())
     }
 
-    /*
-    ➢ Comprar determinada criptomoneda: dado un monto de fiat se compra una cantidad
-    de determinada criptomoneda, tenga en cuenta que al momento de realizar la
-    operación se obtiene del sistema la cotización actual de la criptomoneda para
-    acreditar la correspondiente proporción en el balance de la cripto y desacreditar en
-    el balance de fiat. Luego de ello se registra la transacción con los siguientes datos:
-    fecha, usuario, criptomoneda, tipo: compra de cripto, monto de cripto y cotización.
-    */
     fn comprar_criptomoneda(
         &mut self,
         monto_fiat: f64,
@@ -232,12 +219,6 @@ impl Sistema {
         Ok(())
     }
 
-    // ➢ Vender determinada criptomoneda: dado un monto de cripto se vende por fiat, tenga
-    // en cuenta que al momento de realizar la operación se obtiene del sistema la
-    // cotización actual de la criptomoneda para acreditar la correspondiente proporción en
-    // el balance de fiat y desacreditar en el balance de la criptomoneda. Luego de ello se
-    // registra la transacción con los siguientes datos: fecha, usuario, criptomoneda, tipo:
-    // venta de cripto,monto de cripto y cotización.
     fn vender_criptomoneda(
         &mut self,
         criptomoneda: &Criptomoneda,
@@ -289,12 +270,6 @@ impl Sistema {
         Ok(())
     }
 
-    //➢ Retirar criptomoneda a blockchain: dado un monto de una cripto y una blockchain se
-    // le descuenta del balance de dicha cripto al usuario el monto, la blockchain devuelve
-    // un hash que representa una transacción en ella (esto hágalo retornando el nombre
-    // de la blockchain + un número random). Luego se genera una transacción con los
-    // siguientes datos: fecha, usuario, tipo: retiro cripto, blockchain, hash, cripto, monto,
-    // cotización.
     fn retirar_criptomoneda(
         &mut self,
         usuario: &Usuario,
@@ -346,116 +321,6 @@ impl Sistema {
         Ok(())
     }
 
-    // ➢ Retirar fiat por determinado medio: dado un monto de fiat se le descuenta dicho
-    // monto del balance al usuario y se genera una transacción con la siguiente
-    // información: fecha, usuario, tipo: retiro fiat, monto y medio (puede ser MercadoPago
-    // o Transferencia Bancaria)
-    fn retirar_fiat(
-        &mut self,
-        usuario: &Usuario,
-        monto_fiat: f64,
-        medio: MedioRetiroFiat,
-    ) -> Result<(), String> {
-        let usr = self
-            .buscar_usuario(usuario.email.clone())
-            .ok_or_else(|| format!("El usuario {} no fue encontrado", usuario.email))?;
-
-        if monto_fiat > usr.monto_fiat {
-            return Err(format!(
-                "El usuario no tiene el monto requerido: {} < {}",
-                usr.monto_fiat, monto_fiat
-            ));
-        }
-
-        usr.monto_fiat -= monto_fiat;
-
-        let transaccion = Transaccion::new(
-            Fecha::fecha_actual(),
-            TipoTransaccion::RetiroFiat { medio },
-            monto_fiat,
-            usuario.clone(),
-        );
-        self.transacciones.push(transaccion);
-
-        Ok(())
-    }
-
-    // ➢ Saber cual es la criptomoneda que más cantidad de ventas tiene
-    fn cripto_mas_cantidad_ventas(&self) -> Option<String> {
-        let mut cantidades: HashMap<String, u64> = HashMap::new();
-
-        for transaccion in &self.transacciones {
-            if let TipoTransaccion::VentaCripto { cripto, .. } = &transaccion.tipo {
-                *cantidades.entry(cripto.clone()).or_insert(0) += 1;
-            }
-        }
-
-        cantidades
-            .into_iter()
-            .max_by_key(|&(_, cant)| cant)
-            .map(|(cripto, _)| cripto)
-    }
-
-    // ➢ Saber cual es la criptomoneda que más cantidad de compras tiene
-    fn cripto_mas_cantidad_compras(&self) -> Option<String> {
-        let mut cantidades: HashMap<String, u64> = HashMap::new();
-
-        for transaccion in &self.transacciones {
-            if let TipoTransaccion::CompraCripto { cripto, .. } = &transaccion.tipo {
-                *cantidades.entry(cripto.clone()).or_insert(0) += 1;
-            }
-        }
-
-        cantidades
-            .into_iter()
-            .max_by_key(|&(_, cant)| cant)
-            .map(|(cripto, _)| cripto)
-    }
-
-    // ➢ Saber cual es la criptomoneda que más volumen de ventas tiene
-    fn cripto_mas_volumen_ventas(&self) -> Option<String> {
-        let mut volumenes: HashMap<String, f64> = HashMap::new();
-
-        for transaccion in &self.transacciones {
-            if let TipoTransaccion::VentaCripto {
-                cripto,
-                monto_cripto,
-                ..
-            } = &transaccion.tipo
-            {
-                *volumenes.entry(cripto.clone()).or_insert(0.0) += monto_cripto;
-            }
-        }
-
-        // uso max_by con una comparacion parcial pq no hay eq para floats
-        volumenes
-            .into_iter()
-            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
-            .map(|(cripto, _)| cripto)
-    }
-
-    // ➢ Saber cual es la criptomoneda que más volumen de compras tiene
-    fn cripto_mas_volumen_compras(&self) -> Option<String> {
-        let mut volumenes: HashMap<String, f64> = HashMap::new();
-
-        for transaccion in &self.transacciones {
-            if let TipoTransaccion::CompraCripto {
-                cripto,
-                monto_cripto,
-                ..
-            } = &transaccion.tipo
-            {
-                *volumenes.entry(cripto.clone()).or_insert(0.0) += monto_cripto;
-            }
-        }
-
-        // uso max_by con una comparacion parcial pq no hay eq para floats
-        volumenes
-            .into_iter()
-            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
-            .map(|(cripto, _)| cripto)
-    }
-
     fn recibir_criptomoneda(
         &mut self,
         usuario: &Usuario,
@@ -496,6 +361,114 @@ impl Sistema {
         self.transacciones.push(transaccion);
         Ok(())
     }
+
+    fn retirar_fiat(
+        &mut self,
+        usuario: &Usuario,
+        monto_fiat: f64,
+        medio: MedioRetiroFiat,
+    ) -> Result<(), String> {
+        let usr = self
+            .buscar_usuario(usuario.email.clone())
+            .ok_or_else(|| format!("El usuario {} no fue encontrado", usuario.email))?;
+
+        if monto_fiat > usr.monto_fiat {
+            return Err(format!(
+                "El usuario no tiene el monto requerido: {} < {}",
+                usr.monto_fiat, monto_fiat
+            ));
+        }
+
+        usr.monto_fiat -= monto_fiat;
+
+        let transaccion = Transaccion::new(
+            Fecha::fecha_actual(),
+            TipoTransaccion::RetiroFiat { medio },
+            monto_fiat,
+            usuario.clone(),
+        );
+        self.transacciones.push(transaccion);
+
+        Ok(())
+    }
+
+    fn cripto_mas_cantidad_ventas(&self) -> Option<String> {
+        let mut cantidades: HashMap<String, u64> = HashMap::new();
+
+        for transaccion in &self.transacciones {
+            if let TipoTransaccion::VentaCripto { cripto, .. } = &transaccion.tipo {
+                *cantidades.entry(cripto.clone()).or_insert(0) += 1;
+            }
+        }
+
+        cantidades
+            .into_iter()
+            .max_by_key(|&(_, cant)| cant)
+            .map(|(cripto, _)| cripto)
+    }
+
+    fn cripto_mas_cantidad_compras(&self) -> Option<String> {
+        let mut cantidades: HashMap<String, u64> = HashMap::new();
+
+        for transaccion in &self.transacciones {
+            if let TipoTransaccion::CompraCripto { cripto, .. } = &transaccion.tipo {
+                *cantidades.entry(cripto.clone()).or_insert(0) += 1;
+            }
+        }
+
+        cantidades
+            .into_iter()
+            .max_by_key(|&(_, cant)| cant)
+            .map(|(cripto, _)| cripto)
+    }
+
+    fn cripto_mas_volumen_ventas(&self) -> Option<String> {
+        let mut volumenes: HashMap<String, f64> = HashMap::new();
+
+        for transaccion in &self.transacciones {
+            if let TipoTransaccion::VentaCripto {
+                cripto,
+                monto_cripto,
+                ..
+            } = &transaccion.tipo
+            {
+                *volumenes.entry(cripto.clone()).or_insert(0.0) += monto_cripto;
+            }
+        }
+
+        volumenes
+            .into_iter()
+            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(cripto, _)| cripto)
+    }
+
+    fn cripto_mas_volumen_compras(&self) -> Option<String> {
+        let mut volumenes: HashMap<String, f64> = HashMap::new();
+
+        for transaccion in &self.transacciones {
+            if let TipoTransaccion::CompraCripto {
+                cripto,
+                monto_cripto,
+                ..
+            } = &transaccion.tipo
+            {
+                *volumenes.entry(cripto.clone()).or_insert(0.0) += monto_cripto;
+            }
+        }
+
+        volumenes
+            .into_iter()
+            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(cripto, _)| cripto)
+    }
+
+    // pub fn persistir(&self) {
+    //     let path = "src/tp05/registros/ej05/streaming_rust.json";
+    //     let dir = Path::new(path).parent().unwrap();
+    //
+    //     let serialized = serde_json::to_string_pretty(&self).unwrap();
+    //     write(path, serialized).unwrap();
+    // }
 }
 
 #[cfg(test)]
@@ -524,7 +497,7 @@ mod test {
             "b@b.com".to_string(),
             87654321,
             1000.0,
-            false, // Usuario no validado
+            false,
         );
         let blockchain = Blockchain {
             nombre: "Monero".to_string(),
@@ -558,7 +531,7 @@ mod test {
         let mut s = td.sistema;
         let u1 = td.usuarios[0].clone();
 
-        assert!(s.ingresar_dinero(100.0, &u1).is_ok());
+        s.ingresar_dinero(100.0, &u1).unwrap();
         assert_eq!(
             s.buscar_usuario("a@a.com".to_string()).unwrap().monto_fiat,
             600.0
@@ -595,17 +568,18 @@ mod test {
         let u1 = td.usuarios[0].clone();
         let xmr = td.criptomonedas[0].clone();
 
-        assert!(s.comprar_criptomoneda(400.0, 1.0, &xmr, &u1).is_ok());
+        s.ingresar_dinero(1000.0, &u1).unwrap();
+
+        s.comprar_criptomoneda(400.0, 1.0, &xmr, &u1).unwrap();
         let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
-        assert_eq!(u_mod.monto_fiat, 200.0);
+        assert_eq!(u_mod.monto_fiat, 1200.0);
         assert_eq!(u_mod.balance_criptos.get("XMR").unwrap(), &3.0);
-        assert_eq!(s.transacciones.len(), 1);
+        assert_eq!(s.transacciones.len(), 2);
         assert!(matches!(
-            s.transacciones[0].tipo,
+            s.transacciones[1].tipo,
             TipoTransaccion::CompraCripto { monto_cripto, .. } if monto_cripto == 1.0
         ));
     }
-
     #[test]
     fn test_comprar_criptomoneda_fiat_insuficiente() {
         let td = setup();
@@ -614,8 +588,8 @@ mod test {
         let xmr = td.criptomonedas[0].clone();
 
         assert_eq!(
-            s.comprar_criptomoneda(200.0, 1.0, &xmr, &u1).unwrap_err(),
-            "El costo de la operación supera el monto de fiat 200 < 300"
+            s.comprar_criptomoneda(600.0, 2.0, &xmr, &u1).unwrap_err(),
+            "El costo de la operación supera el monto de fiat del usuario 500 < 600"
         );
     }
 
@@ -656,7 +630,7 @@ mod test {
         let u1 = td.usuarios[0].clone();
         let xmr = td.criptomonedas[0].clone();
 
-        assert!(s.vender_criptomoneda(&xmr, 1.0, &u1).is_ok());
+        s.vender_criptomoneda(&xmr, 1.0, &u1).unwrap();
         let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
         assert_eq!(u_mod.monto_fiat, 800.0);
         assert_eq!(u_mod.balance_criptos.get("XMR").unwrap(), &1.0);
@@ -718,7 +692,7 @@ mod test {
         let xmr = td.criptomonedas[0].clone();
         let blockchain = td.blockchains[0].clone();
 
-        assert!(s.retirar_criptomoneda(&u1, &xmr, 1.0, &blockchain).is_ok());
+        s.retirar_criptomoneda(&u1, &xmr, 1.0, &blockchain).unwrap();
         let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
         assert_eq!(u_mod.balance_criptos.get("XMR").unwrap(), &1.0);
         assert_eq!(u_mod.monto_fiat, 500.0);
@@ -784,12 +758,10 @@ mod test {
         let mut s = td.sistema;
         let u1 = td.usuarios[0].clone();
 
-        assert!(
-            s.retirar_fiat(&u1, 200.0, MedioRetiroFiat::MercadoPago)
-                .is_ok()
-        );
+        s.retirar_fiat(&u1, 200.0, MedioRetiroFiat::MercadoPago)
+            .unwrap();
         let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
-        assert_eq!(u_mod.monto_fiat, 300.0); // 500 - 200
+        assert_eq!(u_mod.monto_fiat, 300.0);
         assert_eq!(s.transacciones.len(), 1);
         assert!(matches!(
             s.transacciones[0].tipo,
@@ -833,7 +805,7 @@ mod test {
     }
 
     #[test]
-    fn test_criptomoneda_mas_vendida_exitoso() {
+    fn test_criptomoneda_mas_cantidad_ventas_exitoso() {
         let td = setup();
         let mut s = td.sistema;
         let u1 = td.usuarios[0].clone();
@@ -862,7 +834,7 @@ mod test {
     }
 
     #[test]
-    fn test_criptomoneda_mas_vendida_no_ventas() {
+    fn test_criptomoneda_mas_cantidad_ventas_no_ventas() {
         let s = setup().sistema;
         assert_eq!(s.cripto_mas_cantidad_ventas(), None);
     }
@@ -899,7 +871,234 @@ mod test {
     #[test]
     fn test_criptomoneda_mayor_volumen_ventas_no_ventas() {
         let s = setup().sistema;
-        assert_eq!(s.cripto_mas_volumen_ventas(), None); // No sales transactions
+        assert_eq!(s.cripto_mas_volumen_ventas(), None);
+    }
+
+    #[test]
+    fn test_agregar_usuario() {
+        let u = Usuario::new(
+            "Usr".to_string(),
+            "Ape".to_string(),
+            "c@c.com".to_string(),
+            12345678,
+            500.0,
+            true,
+        );
+        let mut s = setup().sistema;
+        let initial_user_count = s.usuarios.len();
+        s.agregar_usuario(&u);
+        assert_eq!(s.usuarios.len(), initial_user_count + 1);
+        assert!(s.buscar_usuario("c@c.com".to_string()).is_some());
+    }
+
+    #[test]
+    fn test_recepcion_cripto_exitoso() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+
+        let initial_xmr_balance = *s
+            .buscar_usuario("a@a.com".to_string())
+            .unwrap()
+            .balance_criptos
+            .get("XMR")
+            .unwrap();
+        let expected_xmr_balance = initial_xmr_balance + 0.5;
+
+        s.recibir_criptomoneda(&u1, &xmr, 0.5, &td.blockchains[0])
+            .unwrap();
+
+        let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
+        assert_eq!(
+            *u_mod.balance_criptos.get("XMR").unwrap(),
+            expected_xmr_balance
+        );
+        assert_eq!(u_mod.monto_fiat, 500.0);
+        assert_eq!(s.transacciones.len(), 1);
+        assert!(matches!(
+            &s.transacciones[0].tipo,
+            TipoTransaccion::RecepcionCripto { cripto, monto, .. }
+            if cripto == "XMR" && *monto == 0.5
+        ));
+        assert_eq!(
+            s.transacciones[0].monto_fiat,
+            0.5 * s.cotizaciones.get("XMR").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_recepcion_cripto_usuario_no_encontrado() {
+        let td = setup();
+        let mut s = td.sistema;
+        let non_existent_user = Usuario::new(
+            "Non".to_string(),
+            "Existent".to_string(),
+            "nonexistent@example.com".to_string(),
+            1234,
+            0.0,
+            true,
+        );
+        let xmr = td.criptomonedas[0].clone();
+
+        assert_eq!(
+            s.recibir_criptomoneda(&non_existent_user, &xmr, 1.0, &td.blockchains[0])
+                .unwrap_err(),
+            "El usuario nonexistent@example.com no fue encontrado"
+        );
+    }
+
+    #[test]
+    fn test_recepcion_cripto_sin_cotizacion() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let unknown_crypto = Criptomoneda {
+            nombre: "UnknownCoin".to_string(),
+            prefijo: "UNK".to_string(),
+            blockchains_soportadas: vec![],
+        };
+
+        assert_eq!(
+            s.recibir_criptomoneda(&u1, &unknown_crypto, 1.0, &td.blockchains[0])
+                .unwrap_err(),
+            "No se econtró una cotizacion para UNK"
+        );
+    }
+
+    #[test]
+    fn test_criptomoneda_mas_cantidad_compras_exitoso() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+
+        s.ingresar_dinero(1000.0, &u1).unwrap();
+        s.comprar_criptomoneda(400.0, 1.0, &xmr, &u1).unwrap();
+        s.comprar_criptomoneda(400.0, 1.0, &xmr, &u1).unwrap();
+
+        let btc = Criptomoneda {
+            prefijo: "BTC".to_string(),
+            nombre: "Bitcoin".to_string(),
+            blockchains_soportadas: vec![Blockchain {
+                nombre: "Bitcoin".to_string(),
+                prefijo: "BTC".to_string(),
+            }],
+        };
+        s.cotizaciones.insert("BTC".to_string(), 50000.0);
+        s.agregar_criptomoneda(&btc);
+        s.ingresar_dinero(60000.0, &u1).unwrap();
+        s.comprar_criptomoneda(60000.0, 1.2, &btc, &u1).unwrap();
+
+        assert_eq!(s.cripto_mas_cantidad_compras(), Some("XMR".to_string()));
+    }
+
+    #[test]
+    fn test_criptomoneda_mas_cantidad_compras_no_compras() {
+        let s = setup().sistema;
+        assert_eq!(s.cripto_mas_cantidad_compras(), None);
+    }
+
+    #[test]
+    fn test_criptomoneda_mayor_volumen_compras_exitoso() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+
+        s.ingresar_dinero(1000.0, &u1).unwrap();
+        s.comprar_criptomoneda(400.0, 1.0, &xmr, &u1).unwrap();
+        s.comprar_criptomoneda(400.0, 1.0, &xmr, &u1).unwrap();
+
+        let btc = Criptomoneda {
+            prefijo: "BTC".to_string(),
+            nombre: "Bitcoin".to_string(),
+            blockchains_soportadas: vec![Blockchain {
+                nombre: "Bitcoin".to_string(),
+                prefijo: "BTC".to_string(),
+            }],
+        };
+        s.cotizaciones.insert("BTC".to_string(), 50000.0);
+        s.agregar_criptomoneda(&btc);
+        s.ingresar_dinero(30000.0, &u1).unwrap();
+        s.comprar_criptomoneda(30000.0, 0.5, &btc, &u1).unwrap();
+
+        assert_eq!(s.cripto_mas_volumen_compras(), Some("XMR".to_string()));
+    }
+
+    #[test]
+    fn test_criptomoneda_mayor_volumen_compras_no_compras() {
+        let s = setup().sistema;
+        assert_eq!(s.cripto_mas_volumen_compras(), None);
+    }
+
+    #[test]
+    fn test_buscar_usuario_no_encontrado() {
+        let mut s = setup().sistema;
+        assert!(
+            s.buscar_usuario("non_existent@example.com".to_string())
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn test_comprar_criptomoneda_balance_exacto() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+
+        s.ingresar_dinero(300.0, &u1).unwrap();
+        let user_in_system_email = u1.email.clone();
+        s.comprar_criptomoneda(300.0, 1.0, &xmr, &u1).unwrap();
+
+        let u_mod = s.buscar_usuario(user_in_system_email).unwrap();
+        assert_eq!(u_mod.monto_fiat, 500.0);
+        assert_eq!(u_mod.balance_criptos.get("XMR").unwrap(), &3.0);
+    }
+
+    #[test]
+    fn test_vender_criptomoneda_balance_exacto() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+
+        s.vender_criptomoneda(&xmr, 2.0, &u1).unwrap();
+        let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
+        assert_eq!(u_mod.monto_fiat, 500.0 + (2.0 * 300.0));
+        assert_eq!(*u_mod.balance_criptos.get("XMR").unwrap(), 0.0);
+    }
+
+    #[test]
+    fn test_retirar_criptomoneda_balance_exacto() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+        let xmr = td.criptomonedas[0].clone();
+        let blockchain = td.blockchains[0].clone();
+
+        s.retirar_criptomoneda(&u1, &xmr, 2.0, &blockchain).unwrap();
+        let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
+        assert_eq!(*u_mod.balance_criptos.get("XMR").unwrap(), 0.0);
+    }
+
+    #[test]
+    fn test_retirar_fiat_balance_exacto() {
+        let td = setup();
+        let mut s = td.sistema;
+        let u1 = td.usuarios[0].clone();
+
+        s.retirar_fiat(&u1, 500.0, MedioRetiroFiat::TransferenciaBancaria)
+            .unwrap();
+        let u_mod = s.buscar_usuario("a@a.com".to_string()).unwrap();
+        assert_eq!(u_mod.monto_fiat, 0.0);
+        assert!(matches!(
+            s.transacciones[0].tipo,
+            TipoTransaccion::RetiroFiat {
+                medio: MedioRetiroFiat::TransferenciaBancaria
+            }
+        ));
     }
 }
 

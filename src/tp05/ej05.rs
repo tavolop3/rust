@@ -1,7 +1,8 @@
 #![allow(dead_code, unused_variables)]
 use std::collections::HashMap;
 use std::fs::create_dir_all;
-use std::fs::{remove_file, write};
+use std::fs::{File, remove_file};
+use std::io::Write;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -107,18 +108,15 @@ impl StreamingRust {
         }
     }
 
-    pub fn save_to_file(&self) {
-        let path = "src/tp05/registros/ej05/streaming_rust.json";
-        let dir = Path::new(path).parent().unwrap();
-
-        create_dir_all(dir).unwrap();
-        let serialized = serde_json::to_string_pretty(&self).unwrap();
-        write(path, serialized).unwrap();
+    pub fn persistir(&self) {
+        let mut f = File::create("src/tp05/registros/ej05/streaming_rust.json").unwrap();
+        let registros_serializado = serde_json::to_string_pretty(&self).unwrap();
+        f.write_all(registros_serializado.as_bytes()).unwrap();
     }
 
     pub fn crear_usr(&mut self, usuario: &Usuario) {
         self.usuarios_activos.push(usuario.clone());
-        self.save_to_file();
+        self.persistir();
     }
 
     fn buscar_usuario(&mut self, email: &str) -> Option<&mut Usuario> {
@@ -133,7 +131,7 @@ impl StreamingRust {
         if let Some(user) = self.buscar_usuario(email) {
             if sub_index < user.subscripciones.len() {
                 user.subscripciones[sub_index].tipo_subscripcion.upgrade();
-                self.save_to_file();
+                self.persistir();
                 return true;
             }
         }
@@ -147,12 +145,12 @@ impl StreamingRust {
                     if let Some(i) = self.buscar_usuario_i(email) {
                         let usuario_cancelado = self.usuarios_activos.swap_remove(i);
                         self.usuarios_cancelados.push(usuario_cancelado);
-                        self.save_to_file();
+                        self.persistir();
                         return true;
                     }
                 } else {
                     user.subscripciones.remove(sub_index);
-                    self.save_to_file();
+                    self.persistir();
                     return true;
                 }
             }
@@ -165,11 +163,11 @@ impl StreamingRust {
             if sub_index < user.subscripciones.len() {
                 if user.subscripciones[sub_index].tipo_subscripcion == TipoSubscripcion::Basic {
                     let result = self.cancelar_subscripcion(email, sub_index);
-                    self.save_to_file();
+                    self.persistir();
                     return result;
                 } else {
                     user.subscripciones[sub_index].tipo_subscripcion.downgrade();
-                    self.save_to_file();
+                    self.persistir();
                     return true;
                 }
             }
@@ -388,7 +386,7 @@ mod test {
     #[test]
     fn test_ej05_downgrade_sub_invalid_index() {
         let mut data = setup();
-        let result = data.sistema.downgrade_subscripcion("tao@example.com", 99); // Invalid index
+        let result = data.sistema.downgrade_subscripcion("tao@example.com", 99);
         assert!(!result);
     }
     #[test]
@@ -396,7 +394,7 @@ mod test {
         let mut data = setup();
         let result = data
             .sistema
-            .downgrade_subscripcion("nonexistent@example.com", 0); // Non-existent user
+            .downgrade_subscripcion("nonexistent@example.com", 0);
         assert!(!result);
     }
 
@@ -449,7 +447,7 @@ mod test {
     #[test]
     fn test_ej05_cancelar_sub_invalid_index() {
         let mut data = setup();
-        let result = data.sistema.cancelar_subscripcion("tao@example.com", 99); // Invalid index
+        let result = data.sistema.cancelar_subscripcion("tao@example.com", 99);
         assert!(!result);
     }
 
@@ -458,7 +456,7 @@ mod test {
         let mut data = setup();
         let result = data
             .sistema
-            .cancelar_subscripcion("nonexistent@example.com", 0); // Non-existent user
+            .cancelar_subscripcion("nonexistent@example.com", 0);
         assert!(!result);
     }
 

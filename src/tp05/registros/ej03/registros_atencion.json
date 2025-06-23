@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "mascota": {
+      "nombre": "Firulais",
+      "edad": 5,
+      "tipo": "Perro",
+      "dueño": {
+        "nombre": "Lucho",
+        "direccion": "Av. Siempre Viva 123",
+        "telefono": "1234-5678"
+      }
+    },
+    "diagnostico": "Fiebre loca",
+    "tratamiento": "Paracetamol canino",
+    "fecha": {
+      "año": 2025,
+      "dia": 10,
+      "mes": 6
+    },
+    "proxima_fecha": {
+      "año": 2025,
+      "dia": 15,
+      "mes": 7
+    }
+  }
+]

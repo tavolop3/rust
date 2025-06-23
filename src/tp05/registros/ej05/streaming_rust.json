@@ -1,7 +1,7 @@
 {
   "usuarios_activos": [
     {
-      "nombre": "classic cripto",
+      "nombre": "tao",
       "subscripciones": [
         {
           "costo_mensual": 5000.0,
@@ -11,17 +11,12 @@
             "dia": 23,
             "mes": 6
           },
-          "metodo_pago": {
-            "Cripto": {
-              "direccion": "0x1829821",
-              "moneda": "ETH"
-            }
-          },
-          "tipo_subscripcion": "Classic",
-          "usr_email": "classicripto@example.com"
+          "metodo_pago": "Efectivo",
+          "tipo_subscripcion": "Basic",
+          "usr_email": "tao@example.com"
         }
       ],
-      "email": "classicripto@example.com"
+      "email": "tao@example.com"
     },
     {
       "nombre": "clasico",
@@ -62,11 +57,9 @@
         }
       ],
       "email": "supercred@example.com"
-    }
-  ],
-  "usuarios_cancelados": [
+    },
     {
-      "nombre": "tao",
+      "nombre": "classic cripto",
       "subscripciones": [
         {
           "costo_mensual": 5000.0,
@@ -76,12 +69,18 @@
             "dia": 23,
             "mes": 6
           },
-          "metodo_pago": "Efectivo",
-          "tipo_subscripcion": "Basic",
-          "usr_email": "tao@example.com"
+          "metodo_pago": {
+            "Cripto": {
+              "direccion": "0x1829821",
+              "moneda": "ETH"
+            }
+          },
+          "tipo_subscripcion": "Classic",
+          "usr_email": "classicripto@example.com"
         }
       ],
-      "email": "tao@example.com"
+      "email": "classicripto@example.com"
     }
-  ]
+  ],
+  "usuarios_cancelados": []
 }
