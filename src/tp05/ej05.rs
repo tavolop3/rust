@@ -1,9 +1,7 @@
 #![allow(dead_code, unused_variables)]
 use std::collections::HashMap;
-use std::fs::File;
 use std::fs::create_dir_all;
-use std::fs::remove_file;
-use std::io::{Read, Write};
+use std::fs::{remove_file, write};
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -109,27 +107,18 @@ impl StreamingRust {
         }
     }
 
-    pub fn load_from_file() -> Result<Self, Box<dyn std::error::Error>> {
-        let mut file = File::open("src/tp05/registros/ej05/streaming_rust.json")?;
-        let mut contents = String::new();
-        file.read_to_string(&mut contents)?;
-        let system: StreamingRust = serde_json::from_str(&contents)?;
-        Ok(system)
-    }
-
-    pub fn save_to_file(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn save_to_file(&self) {
         let path = "src/tp05/registros/ej05/streaming_rust.json";
-        let dir = Path::new(path).parent().ok_or("Invalid path")?;
-        create_dir_all(dir)?;
-        let mut file = File::create(path)?;
-        let serialized = serde_json::to_string_pretty(&self)?;
-        file.write_all(serialized.as_bytes())?;
-        Ok(())
+        let dir = Path::new(path).parent().unwrap();
+
+        create_dir_all(dir).unwrap();
+        let serialized = serde_json::to_string_pretty(&self).unwrap();
+        write(path, serialized).unwrap();
     }
 
     pub fn crear_usr(&mut self, usuario: &Usuario) {
         self.usuarios_activos.push(usuario.clone());
-        self.save_to_file().unwrap();
+        self.save_to_file();
     }
 
     fn buscar_usuario(&mut self, email: &str) -> Option<&mut Usuario> {
@@ -144,7 +133,7 @@ impl StreamingRust {
         if let Some(user) = self.buscar_usuario(email) {
             if sub_index < user.subscripciones.len() {
                 user.subscripciones[sub_index].tipo_subscripcion.upgrade();
-                self.save_to_file().unwrap();
+                self.save_to_file();
                 return true;
             }
         }
@@ -158,12 +147,12 @@ impl StreamingRust {
                     if let Some(i) = self.buscar_usuario_i(email) {
                         let usuario_cancelado = self.usuarios_activos.swap_remove(i);
                         self.usuarios_cancelados.push(usuario_cancelado);
-                        self.save_to_file().unwrap();
+                        self.save_to_file();
                         return true;
                     }
                 } else {
                     user.subscripciones.remove(sub_index);
-                    self.save_to_file().unwrap();
+                    self.save_to_file();
                     return true;
                 }
             }
@@ -176,11 +165,11 @@ impl StreamingRust {
             if sub_index < user.subscripciones.len() {
                 if user.subscripciones[sub_index].tipo_subscripcion == TipoSubscripcion::Basic {
                     let result = self.cancelar_subscripcion(email, sub_index);
-                    self.save_to_file().unwrap();
+                    self.save_to_file();
                     return result;
                 } else {
                     user.subscripciones[sub_index].tipo_subscripcion.downgrade();
-                    self.save_to_file().unwrap();
+                    self.save_to_file();
                     return true;
                 }
             }
@@ -190,24 +179,19 @@ impl StreamingRust {
 
     fn metodo_mas_utilizado_generico(coleccion: &[Usuario]) -> Option<MetodoPago> {
         let mut cantidades: HashMap<MetodoPago, usize> = HashMap::new();
-        let mut max_cant: usize = 0;
-        let mut metodo_max = None;
+
+        // contar
         for user in coleccion.iter() {
             for sub in user.subscripciones.iter() {
-                let metodo_act = sub.metodo_pago.clone();
-                cantidades
-                    .entry(metodo_act.clone())
-                    .and_modify(|c| {
-                        *c += 1;
-                        if *c > max_cant {
-                            metodo_max = Some(metodo_act);
-                            max_cant = *c;
-                        }
-                    })
-                    .or_insert(1);
+                *cantidades.entry(sub.metodo_pago.clone()).or_insert(0) += 1;
             }
         }
-        metodo_max
+
+        // encontrar el max
+        cantidades
+            .into_iter() // Convertir el HM en un iterador de pares (key, value)
+            .max_by_key(|&(_, count)| count) // Encuentra el par con el max valor
+            .map(|(metodo, _)| metodo) // Tomar solo el MetodoPago (key), descarta el conteo
     }
 
     pub fn metodo_mas_utilizado_activos(&self) -> Option<MetodoPago> {
@@ -226,24 +210,19 @@ impl StreamingRust {
 
     pub fn subscripcion_mas_contratada_generico(usuarios: &[Usuario]) -> Option<TipoSubscripcion> {
         let mut cantidades: HashMap<TipoSubscripcion, usize> = HashMap::new();
-        let mut max_cant: usize = 0;
-        let mut subscripcion_max: Option<TipoSubscripcion> = None;
+
+        // contar
         for user in usuarios.iter() {
             for sub in user.subscripciones.iter() {
-                let sub_act = sub.tipo_subscripcion.clone();
-                cantidades
-                    .entry(sub_act.clone())
-                    .and_modify(|c| {
-                        *c += 1;
-                        if *c > max_cant {
-                            subscripcion_max = Some(sub_act);
-                            max_cant = *c;
-                        }
-                    })
-                    .or_insert(1);
+                *cantidades.entry(sub.tipo_subscripcion.clone()).or_insert(0) += 1;
             }
         }
-        subscripcion_max
+
+        // buscar el max
+        cantidades
+            .into_iter()
+            .max_by_key(|&(_, count)| count)
+            .map(|(subscripcion_type, _)| subscripcion_type)
     }
 
     pub fn subscripcion_mas_contratada_activos(&self) -> Option<TipoSubscripcion> {
