@@ -14,8 +14,8 @@
     },
     "fecha_vencimiento": {
       "año": 2025,
-      "dia": 30,
-      "mes": 6
+      "dia": 7,
+      "mes": 7
     },
     "fecha_devolucion": null,
     "estado": "EnPrestamo"
@@ -35,8 +35,8 @@
     },
     "fecha_vencimiento": {
       "año": 2025,
-      "dia": 30,
-      "mes": 6
+      "dia": 7,
+      "mes": 7
     },
     "fecha_devolucion": null,
     "estado": "EnPrestamo"
@@ -56,8 +56,8 @@
     },
     "fecha_vencimiento": {
       "año": 2025,
-      "dia": 30,
-      "mes": 6
+      "dia": 7,
+      "mes": 7
     },
     "fecha_devolucion": null,
     "estado": "EnPrestamo"
@@ -77,8 +77,8 @@
     },
     "fecha_vencimiento": {
       "año": 2025,
-      "dia": 30,
-      "mes": 6
+      "dia": 7,
+      "mes": 7
     },
     "fecha_devolucion": null,
     "estado": "EnPrestamo"
@@ -98,8 +98,8 @@
     },
     "fecha_vencimiento": {
       "año": 2025,
-      "dia": 30,
-      "mes": 6
+      "dia": 7,
+      "mes": 7
     },
     "fecha_devolucion": null,
     "estado": "EnPrestamo"

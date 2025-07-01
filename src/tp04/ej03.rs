@@ -157,24 +157,19 @@ impl StreamingRust {
 
     fn metodo_mas_utilizado_generico(coleccion: &[Usuario]) -> Option<MetodoPago> {
         let mut cantidades: HashMap<MetodoPago, usize> = HashMap::new();
-        let mut max_cant: usize = 0;
-        let mut metodo_max = None;
+
+        // contar
         for user in coleccion.iter() {
             for sub in user.subscripciones.iter() {
-                let metodo_act = sub.metodo_pago.clone();
-                cantidades
-                    .entry(metodo_act.clone())
-                    .and_modify(|c| {
-                        *c += 1;
-                        if *c > max_cant {
-                            metodo_max = Some(metodo_act);
-                            max_cant = *c;
-                        }
-                    })
-                    .or_insert(1);
+                *cantidades.entry(sub.metodo_pago.clone()).or_insert(0) += 1;
             }
         }
-        metodo_max
+
+        // encontrar el max
+        cantidades
+            .into_iter() // Convertir el HM en un iterador de pares (key, value)
+            .max_by_key(|&(_, count)| count) // Encuentra el par con el max valor
+            .map(|(metodo, _)| metodo) // Tomar solo el MetodoPago (key), descarta el conteo
     }
 
     pub fn metodo_mas_utilizado_activos(&self) -> Option<MetodoPago> {
@@ -193,24 +188,19 @@ impl StreamingRust {
 
     pub fn subscripcion_mas_contratada_generico(usuarios: &[Usuario]) -> Option<TipoSubscripcion> {
         let mut cantidades: HashMap<TipoSubscripcion, usize> = HashMap::new();
-        let mut max_cant: usize = 0;
-        let mut subscripcion_max: Option<TipoSubscripcion> = None;
+
+        // contar
         for user in usuarios.iter() {
             for sub in user.subscripciones.iter() {
-                let sub_act = sub.tipo_subscripcion.clone();
-                cantidades
-                    .entry(sub_act.clone())
-                    .and_modify(|c| {
-                        *c += 1;
-                        if *c > max_cant {
-                            subscripcion_max = Some(sub_act);
-                            max_cant = *c;
-                        }
-                    })
-                    .or_insert(1);
+                *cantidades.entry(sub.tipo_subscripcion.clone()).or_insert(0) += 1;
             }
         }
-        subscripcion_max
+
+        // buscar el max
+        cantidades
+            .into_iter()
+            .max_by_key(|&(_, count)| count)
+            .map(|(subscripcion_type, _)| subscripcion_type)
     }
 
     pub fn subscripcion_mas_contratada_activos(&self) -> Option<TipoSubscripcion> {

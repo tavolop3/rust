@@ -6,10 +6,10 @@
       "email": "a@a.com",
       "dni": 12345678,
       "validado": true,
-      "monto_fiat": 900.0,
+      "monto_fiat": 5900.0,
       "balance_criptos": {
         "XMR": 4.0,
-        "BTC": 1.2
+        "BTC": 0.5
       }
     },
     {
@@ -23,8 +23,8 @@
     }
   ],
   "cotizaciones": {
-    "BTC": 50000.0,
-    "XMR": 300.0
+    "XMR": 300.0,
+    "BTC": 50000.0
   },
   "criptomonedas": [
     {
@@ -52,7 +52,7 @@
     {
       "fecha": {
         "año": 2025,
-        "dia": 23,
+        "dia": 30,
         "mes": 6
       },
       "tipo": "IngresoFiat",
@@ -70,7 +70,7 @@
     {
       "fecha": {
         "año": 2025,
-        "dia": 23,
+        "dia": 30,
         "mes": 6
       },
       "tipo": {
@@ -94,7 +94,7 @@
     {
       "fecha": {
         "año": 2025,
-        "dia": 23,
+        "dia": 30,
         "mes": 6
       },
       "tipo": {
@@ -118,11 +118,11 @@
     {
       "fecha": {
         "año": 2025,
-        "dia": 23,
+        "dia": 30,
         "mes": 6
       },
       "tipo": "IngresoFiat",
-      "monto_fiat": 60000.0,
+      "monto_fiat": 30000.0,
       "usuario": {
         "nombre": "Tao",
         "apellido": "Lop",
@@ -136,17 +136,17 @@
     {
       "fecha": {
         "año": 2025,
-        "dia": 23,
+        "dia": 30,
         "mes": 6
       },
       "tipo": {
         "CompraCripto": {
           "cripto": "BTC",
-          "monto_cripto": 1.2,
+          "monto_cripto": 0.5,
           "cotizacion": 50000.0
         }
       },
-      "monto_fiat": 60000.0,
+      "monto_fiat": 30000.0,
       "usuario": {
         "nombre": "Tao",
         "apellido": "Lop",
